@@ -1,0 +1,57 @@
+[
+  {
+    "classification": "systemRecordingTileUnavailable",
+    "report": {
+      "schemaVersion": 1,
+      "platform": "android",
+      "status": "failed",
+      "buildValidated": true,
+      "actions": [
+        {
+          "phase": "screenshot",
+          "status": "passed",
+          "kind": "externalExport",
+          "artifact": true
+        },
+        {
+          "phase": "record_start",
+          "status": "failed"
+        }
+      ],
+      "reason": "executionOrEvidenceFailed"
+    }
+  },
+  {
+    "classification": "captureInterruptedDuringEnvironmentPreparation",
+    "report": {
+      "schemaVersion": 1,
+      "platform": "android",
+      "status": "failed",
+      "buildValidated": true,
+      "actions": [],
+      "reason": "executionOrEvidenceFailed"
+    }
+  },
+  {
+    "classification": "systemRecordingEntryUnavailable",
+    "report": {
+      "schemaVersion": 1,
+      "platform": "android",
+      "status": "failed",
+      "buildValidated": true,
+      "actions": [
+        {
+          "phase": "screenshot",
+          "status": "passed",
+          "kind": "externalExport",
+          "artifact": true
+        },
+        {
+          "phase": "record_start",
+          "status": "failed"
+        }
+      ],
+      "reason": "executionOrEvidenceFailed"
+    }
+  }
+]

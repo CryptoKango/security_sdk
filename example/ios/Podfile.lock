@@ -1,0 +1,28 @@
+PODS:
+  - Flutter (1.0.0)
+  - integration_test (0.0.1):
+    - Flutter
+  - security_flutter (0.0.1):
+    - Flutter
+
+DEPENDENCIES:
+  - Flutter (from `Flutter`)
+  - integration_test (from `.symlinks/plugins/integration_test/ios`)
+  - security_flutter (from `.symlinks/plugins/security_flutter/ios`)
+
+EXTERNAL SOURCES:
+  Flutter:
+    :path: Flutter
+  integration_test:
+    :path: ".symlinks/plugins/integration_test/ios"
+  security_flutter:
+    :path: ".symlinks/plugins/security_flutter/ios"
+
+SPEC CHECKSUMS:
+  Flutter: cabc95a1d2626b1b06e7179b784ebcf0c0cde467
+  integration_test: 4a889634ef21a45d28d50d622cf412dc6d9f586e
+  security_flutter: e89f9d4f4578ecc46b560ad6a3708cb49ef07ebd
+
+PODFILE CHECKSUM: 2f4e21bac6f5d8373c69d86a210399b6d7998a80
+
+COCOAPODS: 1.17.0

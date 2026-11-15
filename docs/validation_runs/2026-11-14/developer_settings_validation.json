@@ -1,0 +1,85 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-11-14",
+  "scope": "developerSettingsFeature",
+  "status": "passed",
+  "detectors": [
+    "developerMode",
+    "usbDebugging"
+  ],
+  "ruleVersion": "local-v1",
+  "dartFlutterTests": 81,
+  "pythonTests": 43,
+  "androidJvm": {
+    "tests": 119,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "androidApi": 35,
+  "androidDedicatedRuns": {
+    "enabled": "passed",
+    "zero": "passed",
+    "missing": "passed"
+  },
+  "iosXctests": 6,
+  "ios13Typecheck": "passed",
+  "iosSimulator": "26.5",
+  "iosFullExample": "passed",
+  "androidFullExample": "failedAtSystemRecordingSetup",
+  "latestFlutter": {
+    "status": "passed",
+    "steps": [
+      {
+        "name": "version",
+        "passed": true
+      },
+      {
+        "name": "pub-get",
+        "passed": true
+      },
+      {
+        "name": "core-analyze",
+        "passed": true
+      },
+      {
+        "name": "security_flutter-analyze",
+        "passed": true
+      },
+      {
+        "name": "example-analyze",
+        "passed": true
+      },
+      {
+        "name": "core-test",
+        "passed": true
+      },
+      {
+        "name": "security_flutter-test",
+        "passed": true
+      },
+      {
+        "name": "example-test",
+        "passed": true
+      },
+      {
+        "name": "android-build",
+        "passed": true
+      }
+    ],
+    "nativeTargets": [
+      "android"
+    ],
+    "jdkSelection": "projectCriteria17",
+    "flutter": "3.50.0",
+    "dart": "3.14.0",
+    "androidToolchain": {
+      "gradle": "9.5.0",
+      "agp": "9.3.1",
+      "kotlin": "2.4.20"
+    },
+    "kotlinMode": "flutterLegacyBridge"
+  },
+  "physicalDevices": "pending",
+  "thirdPartyFingerprinting": false
+}

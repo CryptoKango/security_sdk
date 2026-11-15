@@ -1,0 +1,369 @@
+{
+  "capabilities": [
+    {
+      "id": "root",
+      "supported": false
+    },
+    {
+      "id": "hook",
+      "supported": true
+    },
+    {
+      "id": "debugger",
+      "supported": true
+    },
+    {
+      "id": "appIntegrity",
+      "supported": true
+    },
+    {
+      "id": "emulator",
+      "supported": true
+    },
+    {
+      "id": "multiInstance",
+      "supported": true
+    },
+    {
+      "id": "automation",
+      "supported": false
+    },
+    {
+      "id": "accessibility",
+      "supported": true
+    },
+    {
+      "id": "vpn",
+      "supported": true
+    },
+    {
+      "id": "proxy",
+      "supported": true
+    },
+    {
+      "id": "screenshot",
+      "supported": true
+    },
+    {
+      "id": "screenRecording",
+      "supported": true
+    },
+    {
+      "id": "timeAnomaly",
+      "supported": true
+    },
+    {
+      "id": "mockLocation",
+      "supported": true
+    }
+  ],
+  "local": [
+    {
+      "id": "emulator",
+      "status": "detected",
+      "reason": "emulatorBuild",
+      "version": "local-v8"
+    },
+    {
+      "id": "multiInstance",
+      "status": "notDetected",
+      "reason": "noKnownSignal",
+      "version": "local-v8"
+    },
+    {
+      "id": "automation",
+      "status": "unsupported",
+      "reason": "unsupportedPlatform",
+      "version": "local-v8"
+    },
+    {
+      "id": "accessibility",
+      "status": "notDetected",
+      "reason": "noKnownSignal",
+      "version": "local-v8"
+    },
+    {
+      "id": "vpn",
+      "status": "detected",
+      "reason": "tunnelInterface",
+      "version": "local-v8"
+    },
+    {
+      "id": "proxy",
+      "status": "notDetected",
+      "reason": "noKnownSignal",
+      "version": "local-v8"
+    },
+    {
+      "id": "screenRecording",
+      "status": "notDetected",
+      "reason": "noKnownSignal",
+      "version": "local-v8"
+    },
+    {
+      "id": "root",
+      "status": "unsupported",
+      "reason": "simulatorEnvironment",
+      "version": "local-v8"
+    },
+    {
+      "id": "hook",
+      "status": "notDetected",
+      "reason": "noKnownSignal",
+      "version": "local-v8"
+    },
+    {
+      "id": "debugger",
+      "status": "notDetected",
+      "reason": "noKnownSignal",
+      "version": "local-v8"
+    }
+  ],
+  "missingInputs": [
+    {
+      "id": "appIntegrity",
+      "status": "error",
+      "reason": "integrityBaselineRequired",
+      "version": "local-v8"
+    },
+    {
+      "id": "timeAnomaly",
+      "status": "error",
+      "reason": "timeReferenceRequired",
+      "version": "local-v1"
+    },
+    {
+      "id": "mockLocation",
+      "status": "error",
+      "reason": "locationSampleRequired",
+      "version": "local-v1"
+    }
+  ],
+  "allDetectors": [
+    {
+      "id": "root",
+      "status": "unsupported",
+      "reason": "simulatorEnvironment",
+      "version": "local-v8"
+    },
+    {
+      "id": "hook",
+      "status": "notDetected",
+      "reason": "noKnownSignal",
+      "version": "local-v8"
+    },
+    {
+      "id": "debugger",
+      "status": "notDetected",
+      "reason": "noKnownSignal",
+      "version": "local-v8"
+    },
+    {
+      "id": "appIntegrity",
+      "status": "error",
+      "reason": "integrityBaselineRequired",
+      "version": "local-v8"
+    },
+    {
+      "id": "emulator",
+      "status": "detected",
+      "reason": "emulatorBuild",
+      "version": "local-v8"
+    },
+    {
+      "id": "multiInstance",
+      "status": "notDetected",
+      "reason": "noKnownSignal",
+      "version": "local-v8"
+    },
+    {
+      "id": "automation",
+      "status": "unsupported",
+      "reason": "unsupportedPlatform",
+      "version": "local-v8"
+    },
+    {
+      "id": "accessibility",
+      "status": "notDetected",
+      "reason": "noKnownSignal",
+      "version": "local-v8"
+    },
+    {
+      "id": "vpn",
+      "status": "detected",
+      "reason": "tunnelInterface",
+      "version": "local-v8"
+    },
+    {
+      "id": "proxy",
+      "status": "notDetected",
+      "reason": "noKnownSignal",
+      "version": "local-v8"
+    },
+    {
+      "id": "screenRecording",
+      "status": "notDetected",
+      "reason": "noKnownSignal",
+      "version": "local-v8"
+    },
+    {
+      "id": "screenshot",
+      "status": "error",
+      "reason": "observationRequired",
+      "version": "local-v8"
+    },
+    {
+      "id": "timeAnomaly",
+      "status": "error",
+      "reason": "timeReferenceRequired",
+      "version": "local-v1"
+    },
+    {
+      "id": "mockLocation",
+      "status": "error",
+      "reason": "locationSampleRequired",
+      "version": "local-v1"
+    }
+  ],
+  "captureInitial": [
+    {
+      "id": "screenshot",
+      "status": "notDetected",
+      "reason": "noKnownSignal",
+      "version": "local-v8"
+    },
+    {
+      "id": "screenRecording",
+      "status": "notDetected",
+      "reason": "noKnownSignal",
+      "version": "local-v8"
+    }
+  ],
+  "host_screenshot": {
+    "kind": "externalExport",
+    "artifact": true
+  },
+  "afterScreenshot": [
+    {
+      "id": "screenshot",
+      "status": "notDetected",
+      "reason": "noKnownSignal",
+      "version": "local-v8"
+    },
+    {
+      "id": "screenRecording",
+      "status": "notDetected",
+      "reason": "noKnownSignal",
+      "version": "local-v8"
+    }
+  ],
+  "host_record_start": {
+    "kind": "externalExport",
+    "started": true
+  },
+  "duringRecording": [
+    {
+      "id": "screenshot",
+      "status": "notDetected",
+      "reason": "noKnownSignal",
+      "version": "local-v8"
+    },
+    {
+      "id": "screenRecording",
+      "status": "notDetected",
+      "reason": "noKnownSignal",
+      "version": "local-v8"
+    }
+  ],
+  "host_record_stop": {
+    "kind": "externalExport",
+    "stopped": true
+  },
+  "afterRecording": [
+    {
+      "id": "screenshot",
+      "status": "notDetected",
+      "reason": "noKnownSignal",
+      "version": "local-v8"
+    },
+    {
+      "id": "screenRecording",
+      "status": "notDetected",
+      "reason": "noKnownSignal",
+      "version": "local-v8"
+    }
+  ],
+  "host_background": {
+    "kind": "realAppSwitch",
+    "returned": true
+  },
+  "lifecycle": [
+    "inactive",
+    "hidden",
+    "paused",
+    "hidden",
+    "inactive",
+    "resumed"
+  ],
+  "afterBackground": [
+    {
+      "id": "screenshot",
+      "status": "error",
+      "reason": "observationInterrupted",
+      "version": "local-v8"
+    },
+    {
+      "id": "screenRecording",
+      "status": "notDetected",
+      "reason": "noKnownSignal",
+      "version": "local-v8"
+    }
+  ],
+  "explicitStartAfterInterruption": [
+    {
+      "id": "screenshot",
+      "status": "notDetected",
+      "reason": "noKnownSignal",
+      "version": "local-v8"
+    },
+    {
+      "id": "screenRecording",
+      "status": "notDetected",
+      "reason": "noKnownSignal",
+      "version": "local-v8"
+    }
+  ],
+  "restarted": [
+    {
+      "id": "screenshot",
+      "status": "notDetected",
+      "reason": "noKnownSignal",
+      "version": "local-v8"
+    },
+    {
+      "id": "screenRecording",
+      "status": "notDetected",
+      "reason": "noKnownSignal",
+      "version": "local-v8"
+    }
+  ],
+  "stopped": [
+    {
+      "id": "screenshot",
+      "status": "error",
+      "reason": "observationRequired",
+      "version": "local-v8"
+    },
+    {
+      "id": "screenRecording",
+      "status": "notDetected",
+      "reason": "noKnownSignal",
+      "version": "local-v8"
+    }
+  ],
+  "host_final_view": {
+    "artifact": true
+  },
+  "disposed": true,
+  "completed": true
+}

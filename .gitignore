@@ -1,0 +1,15 @@
+**/.dart_tool/
+**/build/
+**/.flutter-plugins*
+**/local.properties
+**/Pods/
+**/.symlinks/
+**/ephemeral/
+**/Flutter/Generated.xcconfig
+**/Flutter/flutter_export_environment.sh
+**/GeneratedPluginRegistrant.*
+**/.idea/
+**/*.iml
+.DS_Store
+
+**/__pycache__/

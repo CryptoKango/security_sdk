@@ -1,0 +1,188 @@
+[
+  {
+    "platform": "android",
+    "run": 1,
+    "reason": "SystemUI ANR removed app focus; start rejected",
+    "report": {
+      "platform": "android",
+      "status": "failed",
+      "buildValidated": true,
+      "actions": []
+    }
+  },
+  {
+    "platform": "android",
+    "run": 2,
+    "reason": "System screenshot overlay interrupted observation; external exporter is not MediaProjection",
+    "report": {
+      "platform": "android",
+      "status": "failed",
+      "buildValidated": true,
+      "actions": [
+        {
+          "phase": "screenshot",
+          "status": "passed",
+          "kind": "systemKey",
+          "artifact": true
+        },
+        {
+          "phase": "record_start",
+          "status": "passed",
+          "kind": "externalExport",
+          "started": true
+        }
+      ]
+    }
+  },
+  {
+    "platform": "android",
+    "run": 4,
+    "reason": "Async test registration ran no actions; strict validator rejected empty result",
+    "report": {
+      "schemaVersion": 1,
+      "platform": "android",
+      "status": "failed",
+      "buildValidated": true,
+      "actions": []
+    }
+  },
+  {
+    "platform": "android",
+    "run": 5,
+    "reason": "Test incorrectly assumed explicit start preserves an interrupted window",
+    "report": {
+      "schemaVersion": 1,
+      "platform": "android",
+      "status": "failed",
+      "buildValidated": true,
+      "actions": [
+        {
+          "phase": "screenshot",
+          "status": "passed",
+          "kind": "externalExport",
+          "artifact": true
+        },
+        {
+          "phase": "record_start",
+          "status": "passed",
+          "kind": "systemMediaProjection",
+          "started": true
+        },
+        {
+          "phase": "record_stop",
+          "status": "passed",
+          "kind": "systemMediaProjection",
+          "stopped": true
+        },
+        {
+          "phase": "background",
+          "status": "passed",
+          "kind": "realAppSwitch",
+          "returned": true
+        }
+      ]
+    }
+  },
+  {
+    "platform": "ios",
+    "run": 2,
+    "reason": "Flutter native semantics handle arrived after test baseline",
+    "report": {
+      "platform": "ios",
+      "status": "failed",
+      "buildValidated": true,
+      "actions": [
+        {
+          "phase": "screenshot",
+          "status": "passed",
+          "kind": "externalExport",
+          "artifact": true
+        },
+        {
+          "phase": "record_start",
+          "status": "passed",
+          "kind": "externalExport",
+          "started": true
+        },
+        {
+          "phase": "record_stop",
+          "status": "passed",
+          "kind": "externalExport",
+          "stopped": true
+        },
+        {
+          "phase": "background",
+          "status": "passed",
+          "kind": "realAppSwitch",
+          "returned": true
+        },
+        {
+          "phase": "final_view",
+          "status": "passed",
+          "artifact": true
+        }
+      ]
+    }
+  },
+  {
+    "platform": "ios",
+    "run": 3,
+    "reason": "Async test registration ran no actions; strict validator rejected empty result",
+    "report": {
+      "schemaVersion": 1,
+      "platform": "ios",
+      "status": "failed",
+      "buildValidated": true,
+      "actions": []
+    }
+  },
+  {
+    "platform": "ios",
+    "run": 4,
+    "reason": "Tap before scroll layout settled missed a button",
+    "report": {
+      "schemaVersion": 1,
+      "platform": "ios",
+      "status": "failed",
+      "buildValidated": true,
+      "actions": []
+    }
+  },
+  {
+    "platform": "ios",
+    "run": 5,
+    "reason": "Test incorrectly assumed explicit start preserves an interrupted window",
+    "report": {
+      "schemaVersion": 1,
+      "platform": "ios",
+      "status": "failed",
+      "buildValidated": true,
+      "actions": [
+        {
+          "phase": "screenshot",
+          "status": "passed",
+          "kind": "externalExport",
+          "artifact": true
+        },
+        {
+          "phase": "record_start",
+          "status": "passed",
+          "kind": "externalExport",
+          "started": true
+        },
+        {
+          "phase": "record_stop",
+          "status": "passed",
+          "kind": "externalExport",
+          "stopped": true
+        },
+        {
+          "phase": "background",
+          "status": "passed",
+          "kind": "realAppSwitch",
+          "returned": true
+        }
+      ]
+    }
+  }
+]

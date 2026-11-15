@@ -1,0 +1,4 @@
+#include "Generated.xcconfig"
+
+// Enable debug-only integration fixtures; absent from Profile and Release.
+SWIFT_ACTIVE_COMPILATION_CONDITIONS = $(inherited) DEBUG

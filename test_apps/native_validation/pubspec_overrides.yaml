@@ -1,0 +1,6 @@
+# Development-only Scene/PiP fixture; not part of the portable SDK workspace.
+dependency_overrides:
+  security_core:
+    path: ../../packages/security_core
+  security_flutter:
+    path: ../../packages/security_flutter

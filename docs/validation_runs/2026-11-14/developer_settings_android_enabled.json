@@ -1,0 +1,18 @@
+{
+  "completed": true,
+  "expected": "enabled",
+  "findings": [
+    {
+      "id": "developerMode",
+      "status": "detected",
+      "reason": "developerModeEnabled",
+      "version": "local-v1"
+    },
+    {
+      "id": "usbDebugging",
+      "status": "detected",
+      "reason": "usbDebuggingEnabled",
+      "version": "local-v1"
+    }
+  ]
+}

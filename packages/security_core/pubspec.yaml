@@ -1,0 +1,10 @@
+name: security_core
+description: Framework-independent security capability contracts and typed observations.
+version: 0.1.0-dev.1
+publish_to: none
+resolution: workspace
+environment:
+  sdk: '>=3.10.9 <4.0.0'
+dev_dependencies:
+  lints: ^6.1.0
+  test: ^1.26.3

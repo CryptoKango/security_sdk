@@ -1,0 +1,183 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-11-14",
+  "status": "passed",
+  "reproduction": {
+    "flutter": "3.38.10",
+    "gradle": "8.14",
+    "launcherJava": "25.0.2",
+    "failureReproduced": true
+  },
+  "repair": {
+    "daemonJvmCriteria": "17",
+    "observedBuildJava": "17.0.20.1",
+    "globalFlutterConfigChanged": false,
+    "directExampleApkBuild": "passed"
+  },
+  "matrix": [
+    {
+      "status": "passed",
+      "steps": [
+        {
+          "name": "version",
+          "passed": true
+        },
+        {
+          "name": "pub-get",
+          "passed": true
+        },
+        {
+          "name": "core-analyze",
+          "passed": true
+        },
+        {
+          "name": "security_flutter-analyze",
+          "passed": true
+        },
+        {
+          "name": "example-analyze",
+          "passed": true
+        },
+        {
+          "name": "core-test",
+          "passed": true
+        },
+        {
+          "name": "security_flutter-test",
+          "passed": true
+        },
+        {
+          "name": "example-test",
+          "passed": true
+        },
+        {
+          "name": "android-build",
+          "passed": true
+        }
+      ],
+      "nativeTargets": [
+        "android"
+      ],
+      "jdkSelection": "projectCriteria17",
+      "flutter": "3.38.10",
+      "dart": "3.10.9",
+      "androidToolchain": {
+        "gradle": "8.14",
+        "agp": "8.11.1",
+        "kotlin": "2.2.20"
+      },
+      "kotlinMode": "externalPlugin"
+    },
+    {
+      "status": "passed",
+      "steps": [
+        {
+          "name": "version",
+          "passed": true
+        },
+        {
+          "name": "pub-get",
+          "passed": true
+        },
+        {
+          "name": "core-analyze",
+          "passed": true
+        },
+        {
+          "name": "security_flutter-analyze",
+          "passed": true
+        },
+        {
+          "name": "example-analyze",
+          "passed": true
+        },
+        {
+          "name": "core-test",
+          "passed": true
+        },
+        {
+          "name": "security_flutter-test",
+          "passed": true
+        },
+        {
+          "name": "example-test",
+          "passed": true
+        },
+        {
+          "name": "android-build",
+          "passed": true
+        }
+      ],
+      "nativeTargets": [
+        "android"
+      ],
+      "jdkSelection": "projectCriteria17",
+      "flutter": "3.44.9",
+      "dart": "3.12.2",
+      "androidToolchain": {
+        "gradle": "9.1.0",
+        "agp": "9.0.1",
+        "kotlin": "2.3.20"
+      },
+      "kotlinMode": "flutterLegacyBridge"
+    },
+    {
+      "status": "passed",
+      "steps": [
+        {
+          "name": "version",
+          "passed": true
+        },
+        {
+          "name": "pub-get",
+          "passed": true
+        },
+        {
+          "name": "core-analyze",
+          "passed": true
+        },
+        {
+          "name": "security_flutter-analyze",
+          "passed": true
+        },
+        {
+          "name": "example-analyze",
+          "passed": true
+        },
+        {
+          "name": "core-test",
+          "passed": true
+        },
+        {
+          "name": "security_flutter-test",
+          "passed": true
+        },
+        {
+          "name": "example-test",
+          "passed": true
+        },
+        {
+          "name": "android-build",
+          "passed": true
+        }
+      ],
+      "nativeTargets": [
+        "android"
+      ],
+      "jdkSelection": "projectCriteria17",
+      "flutter": "3.50.0",
+      "dart": "3.14.0",
+      "androidToolchain": {
+        "gradle": "9.5.0",
+        "agp": "9.3.1",
+        "kotlin": "2.4.20"
+      },
+      "kotlinMode": "flutterLegacyBridge"
+    }
+  ],
+  "repositoryChecks": {
+    "dartFlutterTests": 76,
+    "pythonTests": 41
+  },
+  "deviceRuntimeExecuted": false
+}

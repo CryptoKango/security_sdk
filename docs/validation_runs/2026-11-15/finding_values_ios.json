@@ -1,0 +1,58 @@
+{
+  "completed": true,
+  "expected": "",
+  "findings": [
+    {
+      "id": "developerMode",
+      "status": "unsupported",
+      "reason": "unsupportedPlatform",
+      "version": "local-v1",
+      "values": {}
+    },
+    {
+      "id": "usbDebugging",
+      "status": "unsupported",
+      "reason": "unsupportedPlatform",
+      "version": "local-v1",
+      "values": {}
+    }
+  ],
+  "measuredFindings": [
+    {
+      "id": "accessibility",
+      "status": "notDetected",
+      "reason": "noKnownSignal",
+      "values": {
+        "signalDetected": false,
+        "switchControlEnabled": false,
+        "voiceOverEnabled": false
+      }
+    },
+    {
+      "id": "proxy",
+      "status": "notDetected",
+      "reason": "noKnownSignal",
+      "values": {
+        "pacProxyConfigured": null,
+        "signalDetected": false,
+        "httpProxyEnabled": null
+      }
+    },
+    {
+      "id": "emulator",
+      "status": "detected",
+      "reason": "emulatorBuild",
+      "values": {
+        "signalDetected": true
+      }
+    },
+    {
+      "id": "vpn",
+      "status": "detected",
+      "reason": "tunnelInterface",
+      "values": {
+        "signalDetected": true
+      }
+    }
+  ]
+}

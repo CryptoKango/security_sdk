@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "platform": "ios",
+  "status": "passed",
+  "buildValidated": true,
+  "actions": [
+    {
+      "phase": "screenshot",
+      "status": "passed",
+      "kind": "externalExport",
+      "artifact": true
+    },
+    {
+      "phase": "record_start",
+      "status": "passed",
+      "kind": "externalExport",
+      "started": true
+    },
+    {
+      "phase": "record_stop",
+      "status": "passed",
+      "kind": "externalExport",
+      "stopped": true
+    },
+    {
+      "phase": "background",
+      "status": "passed",
+      "kind": "realAppSwitch",
+      "returned": true
+    },
+    {
+      "phase": "final_view",
+      "status": "passed",
+      "artifact": true
+    }
+  ],
+  "screenshotPositiveAcceptance": "pendingPhysicalDevice",
+  "recordingPositiveAcceptance": "pendingPhysicalDevice"
+}

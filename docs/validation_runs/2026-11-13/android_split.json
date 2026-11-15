@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "scenario": "android_split",
+  "status": "passed",
+  "reason": "assertionsCompleted",
+  "evidence": {
+    "split": {
+      "mainMultiWindow": true,
+      "requests": 1,
+      "mainFocus": false,
+      "mainResumed": true,
+      "peerReceived": true,
+      "peerMultiWindow": true,
+      "peerFocus": true,
+      "peerClosed": false
+    },
+    "unfocusedCapture": {
+      "status": "error",
+      "reason": "observationInterrupted"
+    },
+    "restored": {
+      "mainMultiWindow": false,
+      "requests": 1,
+      "mainFocus": true,
+      "mainResumed": true,
+      "peerReceived": true,
+      "peerMultiWindow": false,
+      "peerFocus": false,
+      "peerClosed": true
+    }
+  },
+  "buildValidated": true,
+  "environment": "Android API 35 Medium Tablet emulator"
+}

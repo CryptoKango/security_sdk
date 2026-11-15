@@ -1,0 +1,69 @@
+{
+  "schemaVersion": 1,
+  "scenario": "ios_scenes",
+  "status": "failed",
+  "reason": "executionOrReportValidationFailed",
+  "evidence": {
+    "connected": {
+      "disconnectedNotification": false,
+      "ready": true,
+      "connected": true,
+      "distinctScenes": true,
+      "requestFailed": false,
+      "mainInterruptions": 1,
+      "detached": false,
+      "sessionRegistered": true,
+      "peerActive": false,
+      "closeRequests": 0,
+      "mainActive": false
+    },
+    "activePeer": {
+      "disconnectedNotification": false,
+      "ready": true,
+      "connected": true,
+      "distinctScenes": true,
+      "requestFailed": false,
+      "mainInterruptions": 2,
+      "detached": false,
+      "sessionRegistered": true,
+      "peerActive": true,
+      "closeRequests": 0,
+      "mainActive": false
+    },
+    "peerCapture": {
+      "status": "notDetected",
+      "reason": "noKnownSignal"
+    },
+    "mainDuringPeer": {
+      "status": "error",
+      "reason": "observationInterrupted"
+    },
+    "beforeClose": {
+      "disconnectedNotification": false,
+      "distinctScenes": true,
+      "mainInterruptions": 2,
+      "requestFailed": false,
+      "peerActive": false,
+      "sessionRegistered": true,
+      "detached": false,
+      "ready": true,
+      "closeRequests": 0,
+      "mainActive": true,
+      "connected": true
+    },
+    "closeAttempt": {
+      "disconnectedNotification": false,
+      "ready": true,
+      "connected": true,
+      "distinctScenes": true,
+      "requestFailed": false,
+      "mainInterruptions": 2,
+      "detached": false,
+      "sessionRegistered": true,
+      "peerActive": false,
+      "closeRequests": 1,
+      "mainActive": true
+    }
+  },
+  "environment": "iPad Pro 11-inch M5, iOS 26.5 simulator, fresh example installation"
+}

@@ -1,0 +1,18 @@
+{
+  "completed": true,
+  "expected": "missing",
+  "findings": [
+    {
+      "id": "developerMode",
+      "status": "error",
+      "reason": "settingValueUnavailable",
+      "version": "local-v1"
+    },
+    {
+      "id": "usbDebugging",
+      "status": "detected",
+      "reason": "usbDebuggingEnabled",
+      "version": "local-v1"
+    }
+  ]
+}

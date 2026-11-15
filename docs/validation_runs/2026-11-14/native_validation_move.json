@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-11-14",
+  "status": "passed",
+  "fixture": "test_apps/native_validation",
+  "flutter": "3.44.9",
+  "sourcePreservation": {
+    "comparedFiles": 77,
+    "changedFiles": [
+      "README.md"
+    ]
+  },
+  "repositoryChecks": {
+    "dartFlutterTests": 76,
+    "pythonTests": 39,
+    "optionalNativeFixtureAnalysis": true
+  },
+  "androidJvm": {
+    "tests": 105,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "androidApi": 35,
+  "iosSimulator": "26.5",
+  "windowReports": {
+    "ios_scenes": "native_validation_move_ios_scenes.json",
+    "ios_pip": "native_validation_move_ios_pip.json",
+    "android_split": "native_validation_move_android_split.json"
+  },
+  "physicalDeviceRun": false
+}

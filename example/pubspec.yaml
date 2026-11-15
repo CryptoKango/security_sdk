@@ -1,0 +1,21 @@
+name: security_sdk_demo
+description: Explicit local Security SDK integration example.
+publish_to: none
+version: 0.1.0+1
+resolution: workspace
+environment:
+  sdk: '>=3.10.9 <4.0.0'
+dependencies:
+  flutter:
+    sdk: flutter
+  security_flutter: ^0.1.0-dev.1
+dev_dependencies:
+  integration_test:
+    sdk: flutter
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+flutter:
+  config:
+    enable-swift-package-manager: false
+  uses-material-design: true
