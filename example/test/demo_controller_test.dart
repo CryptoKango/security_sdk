@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:security_flutter/security_flutter.dart';
@@ -84,15 +85,67 @@ void main() {
       await controller.collectDeviceReport();
       expect(controller.device!.info!.model, 'Model');
       expect(controller.findings.length, 16);
+      final json = jsonDecode(controller.reportJson!) as Map;
+      expect(json['schemaVersion'], 1);
+      expect(json['device'], controller.device!.toJson());
+      expect(json['capabilities'], [
+        for (final c in controller.capabilities) c.toJson(),
+      ]);
+      expect(json['security']['contextId'], 'demo-1');
+      expect(
+        DateTime.parse(json['security']['observedAt'] as String).isUtc,
+        isTrue,
+      );
+      expect(json['security']['findings'], [
+        for (final f in controller.findings) f.toJson(),
+      ]);
       expect(controller.capabilities, isNotEmpty);
       expect(platform.events, isEmpty);
     },
   );
+  test(
+    'standalone reads do not retain a previous complete JSON report',
+    () async {
+      expect(controller.reportJson, isNull);
+      await controller.collectDeviceReport();
+      expect(controller.reportJson, isNotNull);
+      await controller.queryDeviceInfo();
+      expect(controller.device, isNotNull);
+      expect(controller.reportJson, isNull);
+    },
+  );
+  test(
+    'cancelled report clears old JSON and ignores late native completion',
+    () async {
+      await controller.collectDeviceReport();
+      platform.pending = Completer<void>();
+      final operation = controller.collectDeviceReport();
+      await Future<void>.delayed(Duration.zero);
+      expect(controller.reportJson, isNull);
+      controller.cancelScan();
+      await operation;
+      expect(controller.message, contains('cancelled'));
+      platform.pending!.complete();
+      await Future<void>.delayed(Duration.zero);
+      expect(controller.reportJson, isNull);
+      expect(controller.findings, isEmpty);
+    },
+  );
+  test('disposed controller never publishes late report JSON', () async {
+    platform.pending = Completer<void>();
+    final operation = controller.collectDeviceReport();
+    await Future<void>.delayed(Duration.zero);
+    controller.dispose();
+    platform.pending!.complete();
+    await operation;
+    expect(controller.reportJson, isNull);
+  });
   test('failed unified refresh clears old device metadata too', () async {
     await controller.collectDeviceReport();
     platform.fail = true;
     await controller.collectDeviceReport();
     expect(controller.device, isNull);
+    expect(controller.reportJson, isNull);
     expect(controller.findings, isEmpty);
     expect(controller.message, contains('timeout'));
   });

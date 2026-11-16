@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:security_flutter/security_flutter.dart';
@@ -12,13 +13,7 @@ class DemoController extends ChangeNotifier {
 
   final SecuritySdk _sdk;
   final DemoHostInputs hostInputs;
-  static const detectorIds = [
-    ...SecurityDetectors.runtime,
-    ...SecurityDetectors.environment,
-    SecurityDetectors.screenshot,
-    SecurityDetectors.timeAnomaly,
-    SecurityDetectors.mockLocation,
-  ];
+  static const detectorIds = SecurityDetectors.all;
   String selectedDetector = SecurityDetectors.root;
   Duration scanTimeout = const Duration(seconds: 5);
   CancellationToken? _cancellation;
@@ -58,6 +53,7 @@ class DemoController extends ChangeNotifier {
   bool allowReleaseDebugger = false;
   String message = '尚未检查。点击扫描后查看各项结论和实际输出值。';
   DeviceInfoResult? device;
+  String? reportJson;
   List<SecurityFinding> findings = const [];
   List<DetectorCapability> capabilities = const [];
   int _operation = 0;
@@ -74,6 +70,7 @@ class DemoController extends ChangeNotifier {
     message = '正在执行…';
     // Clear prior observations so a failed refresh cannot show stale success.
     device = null;
+    reportJson = null;
     findings = const [];
     capabilities = const [];
     notifyListeners();
@@ -115,7 +112,9 @@ class DemoController extends ChangeNotifier {
             ? IosDebuggerMode.allowReleaseProcessTrace
             : IosDebuggerMode.debugBuildOnly,
       );
+      final json = const JsonEncoder.withIndent('  ').convert(report.toJson());
       if (!_closed) {
+        reportJson = json;
         device = report.device;
         capabilities = report.capabilities;
         findings = report.security.findings;

@@ -8,6 +8,7 @@ import 'src/advanced_controls.dart';
 import 'src/demo_controller.dart';
 import 'src/device_info_panel.dart';
 import 'src/finding_presentation.dart';
+import 'src/report_json_panel.dart';
 
 void main() => runApp(const SecurityDemoApp());
 
@@ -56,6 +57,8 @@ class _DemoPageState extends State<DemoPage> {
             ),
             if (controller.device case final device?)
               SliverToBoxAdapter(child: DeviceInfoPanel(result: device)),
+            if (controller.reportJson case final json?)
+              SliverToBoxAdapter(child: ReportJsonPanel(json: json)),
             SliverList.builder(
               itemCount: controller.capabilities.length,
               itemBuilder: (context, index) {

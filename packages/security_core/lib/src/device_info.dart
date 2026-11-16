@@ -37,6 +37,17 @@ final class DeviceInfo {
 
   /// Android API level only. iOS has no equivalent and returns null.
   final int? apiLevel;
+
+  /// Explicit JSON descriptors; null API level is retained on iOS.
+  Map<String, Object?> toJson() => {
+    'platform': platform.name,
+    'manufacturer': manufacturer,
+    'brand': brand,
+    'model': model,
+    'systemVersion': systemVersion,
+    'apiLevel': apiLevel,
+  };
+
   @override
   String toString() => 'DeviceInfo(${platform.name})';
 }
@@ -57,6 +68,13 @@ final class DeviceInfoResult {
   final DeviceInfoStatus status;
   final DeviceInfo? info;
   final SecurityErrorCode? code;
+
+  Map<String, Object?> toJson() => {
+    'status': status.name,
+    'code': code?.name,
+    'info': info?.toJson(),
+  };
+
   @override
   String toString() => 'DeviceInfoResult(${status.name})';
 }
@@ -71,6 +89,17 @@ final class DeviceSecurityReport {
   final DeviceInfoResult device;
   final List<DetectorCapability> capabilities;
   final SecuritySnapshot security;
+
+  /// Public report schema, independent of the native channel protocol version.
+  /// All nested containers are fresh copies; serialization performs no collection.
+  /// Enum names are wire values. Nullable fields are always included.
+  Map<String, Object?> toJson() => {
+    'schemaVersion': 1,
+    'device': device.toJson(),
+    'capabilities': [for (final item in capabilities) item.toJson()],
+    'security': security.toJson(),
+  };
+
   @override
   String toString() =>
       'DeviceSecurityReport(findings: ${security.findings.length})';

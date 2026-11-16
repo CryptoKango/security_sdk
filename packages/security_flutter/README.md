@@ -14,6 +14,58 @@ final result = await sdk.scan(ScanRequest(
 await sdk.dispose();
 ```
 
+## Unified device report
+
+`report.toJson()` returns the versioned public JSON map. `jsonEncode(report)` is
+also supported (`dart:convert`). Android and iOS share schema version 1, with UTC
+ISO-8601 timestamps, string enum values and explicit null fields. See the
+[JSON contract](../security_core/JSON_FORMAT.md). This is independent of the native
+MethodChannel envelope and the older validation-fixture export.
+
+
+```dart
+final sdk = SecuritySdk(operationTimeout: const Duration(seconds: 5));
+try {
+  final report = await sdk.collectDeviceReport(contextId: 'device-check');
+  final device = report.device; // status, info, code
+  final capabilities = report.capabilities;
+  final findings = report.security.findings; // status, reason, version, values
+  // Render the fields explicitly; metadata is not a security verdict.
+} finally {
+  await sdk.dispose();
+}
+```
+
+Android and iOS select their native implementation automatically. Use
+`sdk.deviceInfo()` when only basic information is needed. Both calls are explicit;
+constructing the SDK does not collect information.
+
+| Basic field | Android | iOS |
+| --- | --- | --- |
+| `platform` | `android` | `ios` |
+| `manufacturer`, `brand` | OS Build descriptors | `Apple` |
+| `model` | `Build.MODEL` | `uname` machine code; simulator host architecture |
+| `systemVersion` | OS release string | OS version string |
+| `apiLevel` | Android API level | `null` (not applicable) |
+
+The iOS model is a hardware code, not a marketing name. User-assigned device names,
+serial numbers, Android ID, IDFA and IDFV are excluded. No third-party fingerprint
+is collected. OS descriptors are not authenticated device identity.
+
+The report defaults to all 16 detectors (`SecurityDetectors.all`). Pass
+`detectorIds` to select checks, and supply `timeReference`, `locationSample` and
+`integrityPolicy` when the host has legitimate inputs. Missing prerequisites remain
+explicit error/unsupported findings. Screenshot observation and iOS Release
+Debugger opt-in remain explicit; this call does not start observation or request
+permissions. Existing finding fields and available numeric/boolean `values` are
+preserved. The report aggregates independent observations, not an atomic snapshot.
+
+Basic information has its own `available` / `unsupported` / `error` status. A
+metadata read failure does not erase otherwise available scan results; operation
+cancellation, timeout and disposal still fail the operation. Existing custom
+`SecurityPlatform` implementations continue to work and report unsupported basic
+information unless they also implement the optional `DeviceInfoPlatform` interface.
+
 Screenshot observation is explicit: `startScreenshotObservation()`, scan
 `SecurityDetectors.screenshot`, then `stopScreenshotObservation()`. Results mean
 an event occurred in that instance's active window. Android requires API 34+ and

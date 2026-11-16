@@ -156,3 +156,20 @@ python3 tool/run_process_restart.py --device <physical-device> \
 结果 `passedControlledRestart` 仅代表受控后台进程终止/重启通过；
 `actualLowMemoryKillVerified=false` 必须保留。退出原因来自系统最后记录，仅作辅助信息，
 单独出现 lowMemory 不足以关联本轮被测试进程。本轮真实 LMK、iOS Jetsam 及物理折叠均未验收。
+
+## Unified device report regression
+
+`integration_test/device_report_test.dart` validates native metadata, all 16
+findings, missing-input reasons, and repeated explicit reads on Android/iOS.
+It is an API integration test, so it does not create a Widget-test semantics
+baseline that can race the iOS accessibility startup handshake.
+
+```sh
+SECURITY_VALIDATION_REPORT=/tmp/device-report.json flutter drive \
+  --driver=test_driver/window_validation.dart \
+  --target=integration_test/device_report_test.dart -d <device-id>
+```
+
+Report fields include model and OS descriptors, never unique device identifiers.
+A completed report alone is insufficient: the Flutter test process must also exit
+successfully. Simulator validation does not replace physical-device acceptance.

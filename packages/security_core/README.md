@@ -14,3 +14,8 @@ clean results. `testing.dart` exposes an explicit fake, not a runtime fallback.
 Development package; publishing remains disabled pending release review.
 
 Minimum Dart 3.10.9 (<4.0.0); no Flutter runtime requirement.
+
+`DeviceSecurityReport.toJson()` serializes the complete report using public schema
+version 1. All nested result models also support `toJson()` and `jsonEncode()`.
+See [JSON_FORMAT.md](JSON_FORMAT.md) for the shared Android/iOS wire contract.
+Serialization does not collect, log, persist or upload information.

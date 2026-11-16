@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:security_flutter/security_flutter.dart';
@@ -73,6 +74,48 @@ class ProfilePlatform
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+  for (final os in DevicePlatform.values) {
+    test(
+      '${os.name} SDK report exports every result using public JSON schema',
+      () async {
+        final p = ProfilePlatform()..os = os;
+        final sdk = SecuritySdk(
+          platform: p,
+          operationTimeout: const Duration(seconds: 5),
+        );
+        addTearDown(sdk.dispose);
+        final report = await sdk.collectDeviceReport(contextId: 'json-report');
+        final exported = jsonDecode(jsonEncode(report)) as Map;
+        expect(
+          exported.keys,
+          unorderedEquals([
+            'schemaVersion',
+            'device',
+            'capabilities',
+            'security',
+          ]),
+        );
+        expect(exported['schemaVersion'], 1);
+        expect(exported['device']['info']['platform'], os.name);
+        expect(
+          exported['device']['info']['apiLevel'],
+          os == DevicePlatform.android ? 36 : null,
+        );
+        expect(exported['capabilities'], hasLength(16));
+        final findings = exported['security']['findings'] as List;
+        expect(findings.map((f) => f['detectorId']), SecurityDetectors.all);
+        expect(
+          findings.singleWhere(
+            (f) => f['detectorId'] == 'timeAnomaly',
+          )['reason'],
+          'timeReferenceRequired',
+        );
+        expect(p.infos, 1);
+        expect(p.scans, 1);
+        expect(p.starts, 0);
+      },
+    );
+  }
   test(
     'one explicit call returns basic info, capabilities and all 16 findings',
     () async {
@@ -243,7 +286,7 @@ void main() {
   tearDown(() => messenger.setMockMethodCallHandler(channel, null));
   Map<String, Object?> wire() => {
     'schemaVersion': 1,
-    'device': {
+    'device': <String, Object?>{
       'platform': 'android',
       'manufacturer': 'maker',
       'brand': 'brand',

@@ -37,6 +37,12 @@ host manifests; the example declares its own demonstration permissions.
 
 See [the runnable example](example/README.md) for setup, state semantics and host-supplied inputs.
 
+Use `SecuritySdk.collectDeviceReport(contextId: ...)` to explicitly obtain Android/iOS
+basic descriptors, capabilities and all requested security findings through one API.
+Use `deviceInfo()` for descriptors alone. See [the unified report API](packages/security_flutter/README.md#unified-device-report)
+for fields, missing-input behavior and platform differences.
+
+
 ## Development
 
 Minimum: Dart 3.10.9 / Flutter 3.38.10. Flutter has no upper-version constraint;

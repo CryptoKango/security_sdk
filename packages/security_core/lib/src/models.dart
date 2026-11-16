@@ -121,6 +121,12 @@ final class DetectorCapability {
   /// An implementation exists but a non-default request option is required.
   /// Availability is not a promise that the OS call or prerequisite will succeed.
   final bool requiresExplicitOptIn;
+
+  Map<String, Object?> toJson() => {
+    'id': id,
+    'supported': supported,
+    'requiresExplicitOptIn': requiresExplicitOptIn,
+  };
 }
 
 final class SecurityFinding {
@@ -145,6 +151,14 @@ final class SecurityFinding {
   final String detectorVersion;
   final DetectionStatus status;
   final FindingReason? reason;
+
+  Map<String, Object?> toJson() => {
+    'detectorId': detectorId,
+    'detectorVersion': detectorVersion,
+    'status': status.name,
+    'reason': reason?.name,
+    'values': Map<String, Object?>.of(values),
+  };
 }
 
 Map<String, Object?> _copyFindingValues(Map<String, Object?> values) {
@@ -173,6 +187,13 @@ final class SecuritySnapshot {
   final String contextId;
   final DateTime observedAt;
   final List<SecurityFinding> findings;
+
+  /// UTC ISO-8601 timestamp, preserving available subsecond precision.
+  Map<String, Object?> toJson() => {
+    'contextId': contextId,
+    'observedAt': observedAt.toUtc().toIso8601String(),
+    'findings': [for (final finding in findings) finding.toJson()],
+  };
 
   @override
   String toString() => 'SecuritySnapshot(findings: ${findings.length})';

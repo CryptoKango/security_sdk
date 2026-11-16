@@ -1,20 +1,13 @@
 import 'package:flutter/foundation.dart';
-import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:security_flutter/security_flutter.dart';
 
 void main() {
   final binding = IntegrationTestWidgetsFlutterBinding.ensureInitialized();
-  testWidgets('unified device report on native platform', (tester) async {
-    await tester.pumpWidget(
-      const Directionality(
-        textDirection: TextDirection.ltr,
-        child: Center(child: Text('统一设备信息接口验证')),
-      ),
-    );
-    await tester.pumpAndSettle();
-    await Future<void>.delayed(const Duration(seconds: 1));
+  // This exercises platform APIs, not widgets. A widget-test semantics baseline
+  // can race the iOS accessibility handshake during native app startup.
+  test('unified device report on native platform', () async {
     final sdk = SecuritySdk(operationTimeout: const Duration(seconds: 10));
     addTearDown(sdk.dispose);
     final result = await sdk.collectDeviceReport(
@@ -78,5 +71,5 @@ void main() {
       ],
     };
     await sdk.dispose();
-  }, semanticsEnabled: false);
+  });
 }
