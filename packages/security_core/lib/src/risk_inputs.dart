@@ -23,6 +23,13 @@ abstract final class SecurityDetectors {
   static const screenshot = 'screenshot';
   static const screenRecording = 'screenRecording';
   static const mockLocation = 'mockLocation';
+  static const all = [
+    ...runtime,
+    ...environment,
+    screenshot,
+    timeAnomaly,
+    mockLocation,
+  ];
   static const environment = [
     emulator,
     multiInstance,

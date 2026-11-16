@@ -82,3 +82,34 @@ in the environment group. Android reports detected only for an explicit enabled
 public setting; zero is unsupported/settingReadRestricted because it may be
 redacted. Missing or failed reads stay errors. iOS is unsupported. These signals
 do not mean a debugger is attached or wireless debugging is enabled.
+
+
+On Android, screenshot findings also expose `values.screenshotObserved` and
+`values.observationActive`. A screenshot confirmed before a focus/lifecycle gap
+remains `screenshotObserved: true`, while the result stays
+`error / observationInterrupted` with `observationActive: false`. This preserves
+receipt of the earlier event without claiming uninterrupted coverage. A false
+historical flag does not exclude captures during the gap. Explicit restart clears
+the history; stop/dispose and replacement owners never inherit an earlier event.
+
+For mixed runtime/capture scans, recording visibility is read at reply time
+on the original valid foreground window. Projection scope can change without a
+focus event; an earlier recording value is not carried across the runtime queue.
+Window/lifecycle invalidation still yields an error and never borrows a replacement
+Activity/Scene. Android's public API reports recording of activities owned by the
+process UID, not the exact Flutter engine or business page; another UID being
+recorded does not by itself establish capture of this app. This remains a snapshot,
+not an ongoing recording stream or a universal wireless-cast detector.
+
+Cached engines retain Dart state across host screens. Detaching or destroying an
+Activity invalidates its screenshot observation; attaching another Activity does
+not restart it. Explicitly start again on the new foreground host. A disposed SDK
+instance stays disposed even if its engine remains cached. Removing an entry from
+FlutterEngineCache does not destroy the engine: the host must finish/detach its
+Activity and destroy the engine when it is no longer needed. The Android plugin
+also releases its own Activity/binding/decor references on Activity destruction
+when a custom host delays detach; this does not replace the host's engine cleanup.
+The SDK does not persist observations across process death. After a new process
+starts, create the host/engine and SDK normally and begin a new observation; do
+not restore a previous snapshot as a current result. Memory pressure alone is not
+a screenshot, recording, root or hook signal.

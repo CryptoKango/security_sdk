@@ -38,3 +38,7 @@ xcrun swiftc "$source_dir/LocalFinding.swift" "$source_dir/CaptureObservation.sw
 
 # Includes live macOS loader churn, not an iOS device efficacy claim.
 sh tool/check_dyld_snapshot.sh
+
+xcrun swiftc "$source_dir/DeviceInformation.swift" \
+  packages/security_flutter/ios/Tests/DeviceInformationTests.swift -o "$work_dir/device-info-tests"
+"$work_dir/device-info-tests"

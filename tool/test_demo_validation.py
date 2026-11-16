@@ -85,3 +85,52 @@ class DemoEvidenceTests(unittest.TestCase):
             if sample['id'] in ('developerMode', 'usbDebugging'):
                 sample.update(status='detected', reason=sample['id'] + 'Enabled')
         validate_evidence('android', e, a)
+
+    def physical_fixture(self):
+        e, a = self.fixture()
+        a[0] = dict(phase='screenshot', status='passed', kind='systemScreenshot')
+        a[-1] = dict(phase='final_view', status='passed', checked=True)
+        e['local'][0].update(status='notDetected', reason='noKnownSignal')
+        e['afterScreenshot'] = [dict(id='screenshot', status='detected', reason='screenshotObserved')]
+        for action in a:
+            e['host_' + action['phase']] = {k: v for k, v in action.items() if k not in ('phase', 'status')}
+        return e, a
+
+    def test_physical_profile_requires_actual_screenshot_and_recording(self):
+        e, a = self.physical_fixture()
+        validate_evidence('android', e, a, physical_android=True)
+        for stage in ['afterScreenshot', 'duringRecording']:
+            bad = copy.deepcopy(e)
+            bad[stage][0].update(status='notDetected', reason='noKnownSignal')
+            with self.assertRaises(ValueError):
+                validate_evidence('android', bad, a, physical_android=True)
+
+    def test_physical_profile_cannot_relabel_simulator_exports(self):
+        with self.assertRaises(ValueError):
+            validate_evidence('android', *self.fixture(), physical_android=True)
+        with self.assertRaises(ValueError):
+            validate_evidence('ios', *self.physical_fixture(), physical_android=True)
+
+    def test_partial_physical_profile_does_not_pass_full_acceptance(self):
+        e, a = self.physical_fixture()
+        a = a[1:]
+        e.pop('afterScreenshot')
+        e.pop('host_screenshot')
+        validate_evidence('android', e, a, physical_android=True, screenshot_executed=False)
+        with self.assertRaises(ValueError):
+            validate_evidence('android', e, a, physical_android=True)
+        with self.assertRaises(ValueError):
+            validate_evidence('android', e, a, screenshot_executed=False)
+
+    def test_physical_history_requires_confirmed_event_and_inactive_scope(self):
+        e, a = self.physical_fixture()
+        sample = e['afterScreenshot'][0]
+        sample.update(status='error', reason='observationInterrupted',
+                      values={'screenshotObserved': True, 'observationActive': False})
+        validate_evidence('android', e, a, physical_android=True)
+        for values in [{}, {'screenshotObserved': False, 'observationActive': False},
+                       {'screenshotObserved': True, 'observationActive': True},
+                       {'screenshotObserved': 1, 'observationActive': False}]:
+            bad = copy.deepcopy(e); bad['afterScreenshot'][0]['values'] = values
+            with self.assertRaises(ValueError):
+                validate_evidence('android', bad, a, physical_android=True)

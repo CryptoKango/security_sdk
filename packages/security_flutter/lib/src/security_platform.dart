@@ -7,6 +7,11 @@ abstract interface class SecurityPlatform {
   Future<void> dispose();
 }
 
+/// Optional basic information boundary. Existing custom providers remain valid.
+abstract interface class DeviceInfoPlatform {
+  Future<DeviceInfo> deviceInfo();
+}
+
 /// Explicit screenshot observation, separate from one-shot scans. Implementations
 /// own a session per SDK instance; stop/dispose must release native observers.
 abstract interface class ScreenshotObservationPlatform {

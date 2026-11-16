@@ -69,6 +69,7 @@ class SecurityFlutterPlugin : FlutterPlugin, MethodChannel.MethodCallHandler,
     override fun onMethodCall(call: MethodCall, result: MethodChannel.Result) {
         try {
             when (call.method) {
+                "deviceInfo" -> result.success(DeviceInformation.collect())
                 "capabilities" -> result.success(mapOf("schemaVersion" to 1,
                     "capabilities" to detectorIds.map { mapOf("id" to it, "supported" to supported(it)) }))
                 "scan" -> scan(call, result)
@@ -115,20 +116,26 @@ class SecurityFlutterPlugin : FlutterPlugin, MethodChannel.MethodCallHandler,
         val observedDecorView = activity?.window?.decorView?.let { WeakReference(it) }
         val observedEpoch = captureEpoch
         val observedWindow = observations[owner]
+        val runtimeIds = ids.filterIsInstance<String>().filter { it in RuntimePolicy.ids }
+        // A projection can change scope without any Activity focus/lifecycle event.
+        // Read its one-shot state at reply time, not before the runtime queue wait.
+        val deferRecording = "screenRecording" in ids && runtimeIds.isNotEmpty() &&
+            Build.VERSION.SDK_INT >= 35 &&
+            context.checkSelfPermission(Manifest.permission.DETECT_SCREEN_RECORDING) == PackageManager.PERMISSION_GRANTED &&
+            activity?.let(::foreground) == true
         val signals = EnvironmentSignals(context)
         val findings = ids.filter { it !in RuntimePolicy.ids }.associateWith { raw ->
                 val id = raw as String
                 val finding = try {
                     when (id) {
                         "screenshot" -> screenshot(owner)
-                        "screenRecording" -> screenRecording()
+                        "screenRecording" -> if (deferRecording) LocalFinding.error("observationInterrupted") else screenRecording()
                         else -> signals.scan(id)
                     }
                 } catch (_: SecurityException) { LocalFinding.error("missingPermission")
                 } catch (_: Exception) { LocalFinding.error("nativeFailure") }
                 finding.wire(id)
             }.toMutableMap()
-        val runtimeIds = ids.filterIsInstance<String>().filter { it in RuntimePolicy.ids }
         fun reply() {
             // A runtime scan may complete after a pause, rebind or stop/start.
             // Never deliver a previously clean capture sample across that gap.
@@ -138,11 +145,23 @@ class SecurityFlutterPlugin : FlutterPlugin, MethodChannel.MethodCallHandler,
             if (contextChanged && observedWindow != null && observations[owner] === observedWindow) {
                 interruptWindow(observedWindow) // A gap discovered at reply time is terminal too.
             }
+            if (deferRecording && observedEpoch == captureEpoch && !contextChanged) {
+                findings["screenRecording"] = (try { screenRecording() }
+                    catch (_: SecurityException) { LocalFinding.error("missingPermission") }
+                    catch (_: Exception) { LocalFinding.error("nativeFailure") }).wire("screenRecording")
+            }
             for (id in ids.filter { it == "screenshot" || it == "screenRecording" }) {
                 if (findings[id]?.get("status") in listOf("detected", "notDetected") &&
                     (observedEpoch != captureEpoch || contextChanged ||
                     (id == "screenshot" && (observations[owner] !== observedWindow || observedWindow?.state?.interrupted == true)))) {
-                    findings[id] = LocalFinding.error("observationInterrupted").wire(id as String)
+                    // History belongs only to the same observation owner/window.
+                    // A stopped/replaced observation must not leak into its successor.
+                    findings[id] = (if (id == "screenshot" && observedWindow != null &&
+                        observations[owner] === observedWindow) {
+                            interruptWindow(observedWindow)
+                            observedWindow.state.interruptedFinding()
+                        }
+                        else LocalFinding.error("observationInterrupted")).wire(id as String)
                 }
             }
             result.success(mapOf("schemaVersion" to 1, "contextId" to contextId,
@@ -350,7 +369,11 @@ class SecurityFlutterPlugin : FlutterPlugin, MethodChannel.MethodCallHandler,
     override fun onActivityResumed(activity: Activity) { if (activity === this.activity) { paused = false; captureEpoch++ } }
     override fun onActivityPaused(activity: Activity) { if (activity === this.activity) { paused = true; interruptWindows() } }
     override fun onActivitySaveInstanceState(activity: Activity, state: Bundle) {}
-    override fun onActivityDestroyed(activity: Activity) { if (activity === this.activity) { paused = true; interruptWindows() } }
+    override fun onActivityDestroyed(activity: Activity) {
+        // Cached/custom hosts can defer ActivityAware detach. Do not retain their
+        // destroyed Activity, binding or decor until the engine is finally evicted.
+        if (activity === this.activity) onDetachedFromActivity()
+    }
     override fun onDetachedFromEngine(binding: FlutterPlugin.FlutterPluginBinding) = detachEngineResources()
 
     internal fun detachEngineResources() {

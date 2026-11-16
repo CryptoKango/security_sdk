@@ -18,6 +18,8 @@ class LifecycleLog extends WidgetsBindingObserver {
 
 void main() {
   final binding = IntegrationTestWidgetsFlutterBinding.ensureInitialized();
+  const physicalAndroid = bool.fromEnvironment('DEMO_PHYSICAL_ANDROID');
+  const skipScreenshot = bool.fromEnvironment('DEMO_SKIP_SCREENSHOT');
   // Let the native engine's initial semantics request settle before flutter_test
   // records its handle baseline. Do not suppress leak checks or OS callbacks.
   setUpAll(() async {
@@ -50,13 +52,14 @@ void main() {
       expect(controller.busy, isFalse);
     }
 
-    List<Map<String, String?>> result() => controller.findings
+    List<Map<String, Object?>> result() => controller.findings
         .map(
           (f) => {
             'id': f.detectorId,
             'status': f.status.name,
             'reason': f.reason?.name,
             'version': f.detectorVersion,
+            'values': f.values,
           },
         )
         .toList();
@@ -74,7 +77,7 @@ void main() {
           const String.fromEnvironment('DEMO_TEST_TOKEN'),
         );
         final response = await request.close().timeout(
-          const Duration(seconds: 40),
+          Duration(seconds: physicalAndroid ? 300 : 40),
         );
         final data = jsonDecode(await utf8.decoder.bind(response).join());
         expect(response.statusCode, 200, reason: '$name host action failed');
@@ -92,8 +95,13 @@ void main() {
         .toList();
     await tap('扫描本地信号');
     evidence['local'] = result();
-    expect(finding('emulator').status, DetectionStatus.detected);
-    expect(finding('hook').status, DetectionStatus.notDetected);
+    expect(
+      finding('emulator').status,
+      physicalAndroid ? DetectionStatus.notDetected : DetectionStatus.detected,
+    );
+    if (!physicalAndroid) {
+      expect(finding('hook').status, DetectionStatus.notDetected);
+    }
     if (defaultTargetPlatform == TargetPlatform.iOS) {
       expect(finding('root').status, DetectionStatus.unsupported);
     }
@@ -115,14 +123,34 @@ void main() {
     evidence['captureInitial'] = result();
     expect(finding('screenshot').status, DetectionStatus.notDetected);
     expect(finding('screenRecording').status, DetectionStatus.notDetected);
-    await phase('screenshot');
-    await Future<void>.delayed(const Duration(seconds: 1));
-    await tap('读取截图 / 录屏');
-    evidence['afterScreenshot'] = result();
-    expect(
-      finding('screenshot').status,
-      isIn([DetectionStatus.detected, DetectionStatus.notDetected]),
-    );
+    if (!skipScreenshot) {
+      await phase('screenshot');
+      await Future<void>.delayed(const Duration(seconds: 1));
+      await tap('读取截图 / 录屏');
+      evidence['afterScreenshot'] = result();
+      final screenshot = finding('screenshot');
+      if (physicalAndroid) {
+        final positive =
+            screenshot.status == DetectionStatus.detected &&
+            screenshot.reason == FindingReason.screenshotObserved;
+        final historical =
+            screenshot.status == DetectionStatus.error &&
+            screenshot.reason == FindingReason.observationInterrupted &&
+            screenshot.values['screenshotObserved'] == true &&
+            screenshot.values['observationActive'] == false;
+        expect(
+          positive || historical,
+          isTrue,
+          reason:
+              'A confirmed screenshot callback is required, including before an interruption',
+        );
+      } else {
+        expect(
+          screenshot.status,
+          isIn([DetectionStatus.detected, DetectionStatus.notDetected]),
+        );
+      }
+    }
     await phase('record_start');
     await Future<void>.delayed(const Duration(seconds: 2));
     // System recording consent temporarily removes app focus. Start a new window.

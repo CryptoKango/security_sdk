@@ -21,6 +21,12 @@ const _names = {
 };
 
 String findingConclusion(SecurityFinding finding) {
+  if (finding.detectorId == SecurityDetectors.screenshot &&
+      finding.status == DetectionStatus.error &&
+      finding.reason == FindingReason.observationInterrupted &&
+      finding.values['screenshotObserved'] == true) {
+    return '已收到截图事件；随后观察中断，请重新开始观察';
+  }
   if (finding.status == DetectionStatus.error &&
       finding.reason == FindingReason.settingValueUnavailable) {
     if (finding.values['settingPresent'] == false) {
@@ -163,6 +169,8 @@ String findingOutput(SecurityFinding finding) => [
 
 const _valueNames = {
   'signalDetected': '本项检测条件是否命中',
+  'screenshotObserved': '本次观察中断前是否收到过截图回调',
+  'observationActive': '本次观察窗口是否仍有效',
   'settingValue': '系统设置读数，null 表示缺失或无效',
   'settingPresent': '设置是否存在',
   'settingValueValid': '是否为有效的 0/1 读数',

@@ -173,3 +173,25 @@ python3 tool/run_demo_device.py --platform ios --device <booted-simulator-uuid> 
 显示 detected；0 为 unsupported / settingReadRestricted，缺值/失败为 error。iOS 为
 unsupported / unsupportedPlatform。界面不把未知当作关闭，也不把开发者选项当作恶意。
 [完整能力边界与真机验收](../docs/developer_settings.md)。无线调试不在本轮实现范围。
+
+
+## Android 真机回归
+
+显式指定已授权的真机，API 35+：
+
+```sh
+python3 tool/run_android_physical.py --device <adb-device> --flutter /absolute/path/to/flutter --adb /absolute/path/to/adb --output /tmp/security-physical-run
+```
+
+从仓库根目录运行，输出目录必须尚不存在。驱动会安装测试版 example；在终端提示截图、录屏开始/停止时，
+由操作人员完成对应系统操作后输入 `done`（无法完成输入 `fail`）。截图必须实际产生系统回调；
+录屏需要 MediaProjection 激活，开始前不能有其他录屏。全程只操作测试应用，不导出手机主屏幕或通知内容。
+`--skip-screenshot` 只运行剩余步骤，报告明确标记截图 notRun，不能作为完整通过。
+测试会短暂切到 HOME 再回到应用；驱动结束后测试包可能被 Flutter 卸载，手动查看可重新 `flutter run`。
+
+[本次 Samsung 真机结果与待验收项](../docs/android_physical_regression.md)。
+
+Android 截图浮层可能中断观察：此时 SDK 保持 `error / observationInterrupted`，
+但用 `values.screenshotObserved=true` 保留中断前已收到的事件，`observationActive=false`。
+页面会显示“已收到截图事件；随后观察中断，请重新开始观察”。显式重开清空旧事件。
+这两个字段不会把中断期变成正常观察；旧版本没有字段时保持缺值。

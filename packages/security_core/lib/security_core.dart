@@ -6,3 +6,4 @@ export 'src/contracts.dart';
 export 'src/models.dart';
 export 'src/integrity_policy.dart';
 export 'src/risk_inputs.dart';
+export 'src/device_info.dart';

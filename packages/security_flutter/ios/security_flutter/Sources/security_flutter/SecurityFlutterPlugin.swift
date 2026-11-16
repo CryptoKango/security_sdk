@@ -21,6 +21,11 @@ public class SecurityFlutterPlugin: NSObject, FlutterPlugin {
 
   public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
     switch call.method {
+    case "deviceInfo":
+      guard let value = DeviceInformation.collect(systemVersion: UIDevice.current.systemVersion) else {
+        result(FlutterError(code: "platform_unavailable", message: "Device information unavailable", details: nil)); return
+      }
+      result(value)
     case "capabilities":
       var supported: Set<String> = ["emulator", "accessibility", "vpn", "proxy", "screenshot", "screenRecording", "hook", "appIntegrity", "debugger", "multiInstance"]
       if RuntimeSignals.rootSupported { supported.insert("root") }
@@ -77,7 +82,10 @@ public class SecurityFlutterPlugin: NSObject, FlutterPlugin {
             originalObservation?.interrupt() // Do not invalidate a newer owner's replacement.
           }
           for id in captureIds where ["detected", "notDetected"].contains(findings[id]?["status"] as? String ?? "") {
-            if !valid || (id == "screenshot" && (self.observations[owner] !== originalObservation || originalObservation?.interrupted == true)) {
+            if id == "screenRecording" {
+              findings[id] = captureGuard.recordingFinding(target: self.window, scene: self.window?.windowScene,
+                screen: self.window?.screen, foreground: self.foreground, read: self.screenRecording).wire(id)
+            } else if !valid || (id == "screenshot" && (self.observations[owner] !== originalObservation || originalObservation?.interrupted == true)) {
               findings[id] = LocalFinding.error("observationInterrupted").wire(id)
             }
           }

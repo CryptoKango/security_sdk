@@ -1,6 +1,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION" />
     <application android:label="Security split test" android:theme="@android:style/Theme.Material.Light.NoActionBar" android:allowBackup="false">
         <activity android:name=".CompanionActivity" android:exported="true" android:launchMode="singleTop"
             android:resizeableActivity="true" android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout" />
+        <activity android:name=".ProjectionActivity" android:exported="true" />
+        <service android:name=".ProjectionService" android:exported="false" android:foregroundServiceType="mediaProjection" />
     </application>
 </manifest>

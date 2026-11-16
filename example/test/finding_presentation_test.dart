@@ -207,6 +207,31 @@ void main() {
       );
     },
   );
+  test(
+    'confirmed screenshot remains visible when the observation later interrupts',
+    () {
+      final finding = f(
+        'screenshot',
+        DetectionStatus.error,
+        FindingReason.observationInterrupted,
+        {'screenshotObserved': true, 'observationActive': false},
+      );
+      expect(findingConclusion(finding), '已收到截图事件；随后观察中断，请重新开始观察');
+      expect(findingOutput(finding), contains('status: error'));
+      expect(findingOutput(finding), contains('screenshotObserved: true'));
+      expect(
+        findingConclusion(
+          f(
+            'screenshot',
+            DetectionStatus.error,
+            FindingReason.observationInterrupted,
+            {'screenshotObserved': false, 'observationActive': false},
+          ),
+        ),
+        isNot(contains('已收到截图事件')),
+      );
+    },
+  );
   test('time readings keep their precision and explicit units', () {
     final output = findingOutput(
       f('timeAnomaly', DetectionStatus.detected, FindingReason.timeDeviation, {

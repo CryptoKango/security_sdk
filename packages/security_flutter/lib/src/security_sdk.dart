@@ -32,6 +32,73 @@ final class SecuritySdk implements SecurityScanner {
     return const UnsupportedSecurityPlatform();
   }
 
+  /// Explicitly reads basic descriptors; never requests permissions or identifiers.
+  Future<DeviceInfoResult> deviceInfo() => _run(() async {
+    final provider = _platform;
+    if (provider is! DeviceInfoPlatform) {
+      return const DeviceInfoResult.unsupported();
+    }
+    try {
+      return DeviceInfoResult.available(
+        await (provider as DeviceInfoPlatform).deviceInfo(),
+      );
+    } on SecurityFailure catch (failure) {
+      if ({
+        SecurityErrorCode.disposed,
+        SecurityErrorCode.cancelled,
+        SecurityErrorCode.timeout,
+      }.contains(failure.code)) {
+        rethrow;
+      }
+      return failure.code == SecurityErrorCode.unsupported
+          ? const DeviceInfoResult.unsupported()
+          : DeviceInfoResult.failure(failure.code);
+    } catch (_) {
+      return const DeviceInfoResult.failure(SecurityErrorCode.internalError);
+    }
+  }, _timeout);
+
+  /// One explicit call for basic information, capabilities and all requested checks.
+  /// Missing inputs and unsupported checks stay visible. Screenshot observation
+  /// and iOS Release debugger opt-in remain explicit host actions.
+  Future<DeviceSecurityReport> collectDeviceReport({
+    required String contextId,
+    Iterable<String> detectorIds = SecurityDetectors.all,
+    Duration? timeout,
+    CancellationToken? cancellation,
+    TrustedTimeReference? timeReference,
+    LocationRiskSample? locationSample,
+    AppIntegrityPolicy? integrityPolicy,
+    IosDebuggerMode iosDebuggerMode = IosDebuggerMode.debugBuildOnly,
+  }) {
+    final request = ScanRequest(
+      contextId: contextId,
+      detectorIds: detectorIds,
+      timeout: timeout ?? _timeout,
+      cancellation: cancellation,
+      timeReference: timeReference,
+      locationSample: locationSample,
+      integrityPolicy: integrityPolicy,
+      iosDebuggerMode: iosDebuggerMode,
+    );
+    return _run(
+      () async {
+        final values = await Future.wait<Object>([
+          deviceInfo(),
+          capabilities(),
+          scan(request),
+        ]);
+        return DeviceSecurityReport(
+          device: values[0] as DeviceInfoResult,
+          capabilities: values[1] as List<DetectorCapability>,
+          security: values[2] as SecuritySnapshot,
+        );
+      },
+      request.timeout,
+      cancellation,
+    );
+  }
+
   @override
   Future<List<DetectorCapability>> capabilities() => _run(
     () async => [
@@ -109,6 +176,9 @@ final class SecuritySdk implements SecurityScanner {
   /// returning to the foreground never resumes observation automatically.
   /// Scan `screenshot` to read whether an event occurred since start; stop/start
   /// opens a new window. Host must stop when leaving the relevant UI.
+  /// Android may retain `values['screenshotObserved'] == true` after a gap.
+  /// The finding remains error/observationInterrupted with observationActive=false;
+  /// it reports an earlier confirmed event, not a continuously observed window.
   Future<void> startScreenshotObservation() async {
     final platform = _platform;
     if (platform is! ScreenshotObservationPlatform) {

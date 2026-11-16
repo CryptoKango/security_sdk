@@ -57,6 +57,7 @@ class DemoController extends ChangeNotifier {
   bool busy = false;
   bool allowReleaseDebugger = false;
   String message = '尚未检查。点击扫描后查看各项结论和实际输出值。';
+  DeviceInfoResult? device;
   List<SecurityFinding> findings = const [];
   List<DetectorCapability> capabilities = const [];
   int _operation = 0;
@@ -72,6 +73,7 @@ class DemoController extends ChangeNotifier {
     busy = true;
     message = '正在执行…';
     // Clear prior observations so a failed refresh cannot show stale success.
+    device = null;
     findings = const [];
     capabilities = const [];
     notifyListeners();
@@ -90,6 +92,39 @@ class DemoController extends ChangeNotifier {
       }
     }
   }
+
+  Future<void> queryDeviceInfo() => _run(() async {
+    final result = await _sdk.deviceInfo();
+    if (!_closed) device = result;
+    return '设备基础信息读取结束：${result.status.name}。';
+  });
+
+  Future<void> collectDeviceReport() => _run(() async {
+    final cancellation = CancellationToken();
+    _cancellation = cancellation;
+    if (!_closed) notifyListeners();
+    try {
+      final report = await _sdk.collectDeviceReport(
+        contextId: 'demo-${++_operation}',
+        timeout: scanTimeout,
+        cancellation: cancellation,
+        integrityPolicy: hostInputs.integrityPolicy,
+        timeReference: hostInputs.timeReference,
+        locationSample: hostInputs.locationSample,
+        iosDebuggerMode: allowReleaseDebugger
+            ? IosDebuggerMode.allowReleaseProcessTrace
+            : IosDebuggerMode.debugBuildOnly,
+      );
+      if (!_closed) {
+        device = report.device;
+        capabilities = report.capabilities;
+        findings = report.security.findings;
+      }
+      return '已统一获取设备基础信息、能力与 ${report.security.findings.length} 项检测结果。';
+    } finally {
+      _cancellation = null;
+    }
+  });
 
   Future<void> queryCapabilities() => _run(() async {
     final result = await _sdk.capabilities();

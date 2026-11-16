@@ -7,5 +7,9 @@
     <!-- Only the debug integration fixture opts the example into PiP. -->
     <application>
         <activity android:name=".MainActivity" android:supportsPictureInPicture="true" android:resizeableActivity="true" />
+        <activity android:name=".ReclaimActivity" android:exported="false"
+            android:theme="@style/NormalTheme" android:hardwareAccelerated="true" />
+        <activity android:name=".CachedReclaimActivity" android:exported="false"
+            android:theme="@style/NormalTheme" android:hardwareAccelerated="true" />
     </application>
 </manifest>

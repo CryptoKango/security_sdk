@@ -5,7 +5,7 @@ DETECTORS = {'root', 'hook', 'debugger', 'appIntegrity', 'emulator', 'multiInsta
              'screenshot', 'timeAnomaly', 'mockLocation'}
 
 
-def validate_evidence(platform, evidence, actions):
+def validate_evidence(platform, evidence, actions, *, physical_android=False, screenshot_executed=True):
     def require(value):
         if not value:
             raise ValueError('Incomplete or inconsistent example evidence')
@@ -19,18 +19,24 @@ def validate_evidence(platform, evidence, actions):
             require(matches[0].get('reason') == reason)
 
     require(platform in ('android', 'ios'))
+    require(not physical_android or platform == 'android')
     require(evidence.get('completed') is True and evidence.get('disposed') is True)
-    require([a.get('phase') for a in actions] == PHASES)
+    require(screenshot_executed or physical_android)
+    require([a.get('phase') for a in actions] == [p for p in PHASES if screenshot_executed or p != 'screenshot'])
+    by_phase = {a['phase']: a for a in actions}
     for action in actions:
         require(action.get('status') == 'passed')
         host = evidence.get('host_' + action['phase'])
         require(host == {k: v for k, v in action.items() if k not in ('phase', 'status')})
-    require(actions[0].get('kind') == 'externalExport' and actions[0].get('artifact') is True)
+    if screenshot_executed:
+        require(by_phase['screenshot'].get('kind') == ('systemScreenshot' if physical_android else 'externalExport'))
+        if not physical_android:
+            require(by_phase['screenshot'].get('artifact') is True)
     kind = 'systemMediaProjection' if platform == 'android' else 'externalExport'
-    require(actions[1].get('kind') == kind and actions[1].get('started') is True)
-    require(actions[2].get('kind') == kind and actions[2].get('stopped') is True)
-    require(actions[3].get('kind') == 'realAppSwitch' and actions[3].get('returned') is True)
-    require(actions[4].get('artifact') is True)
+    require(by_phase['record_start'].get('kind') == kind and by_phase['record_start'].get('started') is True)
+    require(by_phase['record_stop'].get('kind') == kind and by_phase['record_stop'].get('stopped') is True)
+    require(by_phase['background'].get('kind') == 'realAppSwitch' and by_phase['background'].get('returned') is True)
+    require(by_phase['final_view'].get('checked' if physical_android else 'artifact') is True)
     ids = [f.get('id') for f in evidence.get('allDetectors', [])]
     require(len(ids) == len(DETECTORS) and set(ids) == DETECTORS)
     for detector, enabled_reason in [('developerMode', 'developerModeEnabled'), ('usbDebugging', 'usbDebuggingEnabled')]:
@@ -39,8 +45,22 @@ def validate_evidence(platform, evidence, actions):
             ('detected', enabled_reason), ('unsupported', 'settingReadRestricted'),
             ('error', 'settingValueUnavailable'), ('error', 'missingPermission'), ('error', 'nativeFailure')}
         require((sample.get('status'), sample.get('reason')) in allowed)
-    finding('local', 'emulator', 'detected', 'emulatorBuild')
-    finding('local', 'hook', 'notDetected', 'noKnownSignal')
+    if physical_android:
+        finding('local', 'emulator', 'notDetected', 'noKnownSignal')
+        if screenshot_executed:
+            samples = [v for v in evidence.get('afterScreenshot', []) if v.get('id') == 'screenshot']
+            require(len(samples) == 1)
+            capture = samples[0]
+            pair = (capture.get('status'), capture.get('reason'))
+            if pair == ('error', 'observationInterrupted'):
+                values = capture.get('values', {})
+                require(set(values) == {'screenshotObserved', 'observationActive'})
+                require(values['screenshotObserved'] is True and values['observationActive'] is False)
+            else:
+                require(pair == ('detected', 'screenshotObserved'))
+    else:
+        finding('local', 'emulator', 'detected', 'emulatorBuild')
+        finding('local', 'hook', 'notDetected', 'noKnownSignal')
     if platform == 'ios':
         finding('local', 'root', 'unsupported', 'simulatorEnvironment')
     for detector, reason in [('appIntegrity', 'integrityBaselineRequired'),

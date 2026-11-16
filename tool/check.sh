@@ -17,3 +17,11 @@ python3 -m unittest discover -s tool -p test_window_validation.py
 python3 -m unittest discover -s tool -p test_demo_validation.py
 
 python3 -m unittest discover -s tool -p test_flutter_compatibility.py
+
+python3 -m unittest discover -s tool -p test_capture_probe_validation.py
+
+python3 -m unittest discover -s tool -p test_physical_lifecycle_validation.py
+
+python3 -m unittest discover -s tool -p test_projection_validation.py
+
+python3 -m unittest discover -s tool -p test_process_restart_validation.py

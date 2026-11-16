@@ -8,7 +8,10 @@ import 'local_finding_contract.dart';
 import 'local_finding_values.dart';
 
 final class MethodChannelSecurityPlatform
-    implements SecurityPlatform, ScreenshotObservationPlatform {
+    implements
+        SecurityPlatform,
+        ScreenshotObservationPlatform,
+        DeviceInfoPlatform {
   MethodChannelSecurityPlatform({MethodChannel? channel})
     : _channel = channel ?? const MethodChannel('security_sdk/local/v1');
   final MethodChannel _channel;
@@ -37,6 +40,49 @@ final class MethodChannelSecurityPlatform
             ? SecurityErrorCode.unsupported
             : SecurityErrorCode.platformUnavailable,
       );
+    }
+  }
+
+  @override
+  Future<DeviceInfo> deviceInfo() async {
+    if (_disposed) throw const SecurityFailure(SecurityErrorCode.disposed);
+    final response = await _invoke('deviceInfo');
+    final raw = response['device'];
+    const keys = {
+      'platform',
+      'manufacturer',
+      'brand',
+      'model',
+      'systemVersion',
+      'apiLevel',
+    };
+    if (response.length != 2 ||
+        raw is! Map ||
+        raw.length != keys.length ||
+        !raw.keys.every(keys.contains) ||
+        !['android', 'ios'].contains(raw['platform']) ||
+        [
+          'manufacturer',
+          'brand',
+          'model',
+          'systemVersion',
+        ].any((k) => raw[k] is! String) ||
+        (raw['apiLevel'] != null && raw['apiLevel'] is! int)) {
+      throw const SecurityFailure(SecurityErrorCode.invalidResponse);
+    }
+    try {
+      return DeviceInfo(
+        platform: raw['platform'] == 'android'
+            ? DevicePlatform.android
+            : DevicePlatform.ios,
+        manufacturer: raw['manufacturer'] as String,
+        brand: raw['brand'] as String,
+        model: raw['model'] as String,
+        systemVersion: raw['systemVersion'] as String,
+        apiLevel: raw['apiLevel'] as int?,
+      );
+    } on SecurityFailure {
+      throw const SecurityFailure(SecurityErrorCode.invalidResponse);
     }
   }
 

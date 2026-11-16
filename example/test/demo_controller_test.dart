@@ -6,7 +6,20 @@ import 'package:security_sdk_demo/src/demo_controller.dart';
 import 'package:security_sdk_demo/host_input_example.dart';
 import 'package:security_sdk_demo/session_example.dart';
 
-class FakePlatform implements SecurityPlatform, ScreenshotObservationPlatform {
+class FakePlatform
+    implements
+        SecurityPlatform,
+        ScreenshotObservationPlatform,
+        DeviceInfoPlatform {
+  @override
+  Future<DeviceInfo> deviceInfo() async => DeviceInfo(
+    platform: DevicePlatform.android,
+    manufacturer: "Maker",
+    brand: "Brand",
+    model: "Model",
+    systemVersion: "16",
+    apiLevel: 36,
+  );
   final requests = <ScanRequest>[];
   final events = <String>[];
   Completer<void>? pending;
@@ -65,6 +78,24 @@ void main() {
   });
   tearDown(() => controller.dispose());
 
+  test(
+    'unified collection exposes values and keeps all detector results',
+    () async {
+      await controller.collectDeviceReport();
+      expect(controller.device!.info!.model, 'Model');
+      expect(controller.findings.length, 16);
+      expect(controller.capabilities, isNotEmpty);
+      expect(platform.events, isEmpty);
+    },
+  );
+  test('failed unified refresh clears old device metadata too', () async {
+    await controller.collectDeviceReport();
+    platform.fail = true;
+    await controller.collectDeviceReport();
+    expect(controller.device, isNull);
+    expect(controller.findings, isEmpty);
+    expect(controller.message, contains('timeout'));
+  });
   test(
     'construction performs no collection and local scan omits host inputs',
     () async {

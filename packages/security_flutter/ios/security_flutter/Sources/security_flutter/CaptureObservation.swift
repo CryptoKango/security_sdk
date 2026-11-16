@@ -58,6 +58,15 @@ final class CaptureObservation {
     }
     return true
   }
+  /// Recording visibility may change without a window/Scene activation event.
+  /// Validate lifetime first, then read the current system value at reply time.
+  func recordingFinding(target: AnyObject?, scene: AnyObject? = nil, screen: AnyObject? = nil,
+                        foreground: Bool, read: () -> LocalFinding) -> LocalFinding {
+    guard validate(target: target, scene: scene, screen: screen, foreground: foreground) else {
+      return .error("observationInterrupted")
+    }
+    return read()
+  }
   func record(target: AnyObject?, scene: AnyObject? = nil, screen: AnyObject? = nil, foreground: Bool) {
     if validate(target: target, scene: scene, screen: screen, foreground: foreground) { seen = true }
   }

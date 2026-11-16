@@ -124,6 +124,29 @@ struct CaptureObservationTests {
       let observation=CaptureObservation(target:window,scene:scene); scene=nil
       return !observation.validate(target:window,foreground:true)
     }
+    test("recording scope changes in either direction are read at reply time") {
+      let window=NSObject(); let observation=CaptureObservation(target:window)
+      var captured=false; var reads=0
+      func read() -> LocalFinding { reads += 1; return .signal(captured,"screenCaptured") }
+      let first=observation.recordingFinding(target:window,foreground:true,read:read)
+      captured=true
+      let second=observation.recordingFinding(target:window,foreground:true,read:read)
+      captured=false
+      let third=observation.recordingFinding(target:window,foreground:true,read:read)
+      return first.status=="notDetected" && second.status=="detected" && third.status=="notDetected" && reads==3
+    }
+    test("recording does not read a replaced or detached window") {
+      let window=NSObject(); let next=NSObject(); let observation=CaptureObservation(target:window)
+      var reads=0
+      func read() -> LocalFinding { reads += 1; return .signal(true,"screenCaptured") }
+      let replaced=observation.recordingFinding(target:next,foreground:true,read:read)
+      let restored=observation.recordingFinding(target:window,foreground:true,read:read)
+      return replaced.reason=="observationInterrupted" && restored.reason=="observationInterrupted" && reads==0
+    }
+    test("recording reader failures remain errors") {
+      let window=NSObject(); let observation=CaptureObservation(target:window)
+      return observation.recordingFinding(target:window,foreground:true,read:{ .error("nativeFailure") }).status=="error"
+    }
     print("\(passed) capture observation tests passed")
   }
 }

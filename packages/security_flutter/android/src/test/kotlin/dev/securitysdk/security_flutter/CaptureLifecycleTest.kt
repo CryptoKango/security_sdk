@@ -27,18 +27,21 @@ class CaptureLifecycleTest {
         override fun isInMultiWindowMode() = multiWindow
         var failedRemovals = 0
         val callbacks = mutableSetOf<ScreenCaptureCallback>()
+        val callbackExecutors = mutableMapOf<ScreenCaptureCallback, Executor>()
         override fun hasWindowFocus() = focused
-        override fun registerScreenCaptureCallback(executor: Executor, callback: ScreenCaptureCallback) { callbacks.add(callback) }
+        override fun registerScreenCaptureCallback(executor: Executor, callback: ScreenCaptureCallback) { callbacks.add(callback); callbackExecutors[callback] = executor }
         override fun unregisterScreenCaptureCallback(callback: ScreenCaptureCallback) {
             if (failedRemovals-- > 0) throw IllegalStateException("fixture cleanup")
             callbacks.remove(callback)
+            callbackExecutors.remove(callback)
         }
         var recordingAdds = 0
+        var recordingState = WindowManager.SCREEN_RECORDING_STATE_NOT_VISIBLE
         var failRecordingRemovals = 0
         val recordingCallbacks = mutableSetOf<Any>()
         private val manager = Proxy.newProxyInstance(WindowManager::class.java.classLoader, arrayOf(WindowManager::class.java)) { _, method, args ->
             when (method.name) {
-                "addScreenRecordingCallback" -> { recordingAdds++; recordingCallbacks.add(args!![1]); 0 }
+                "addScreenRecordingCallback" -> { recordingAdds++; recordingCallbacks.add(args!![1]); recordingState }
                 "removeScreenRecordingCallback" -> {
                     if (failRecordingRemovals-- > 0) throw IllegalStateException("fixture cleanup")
                     recordingCallbacks.remove(args!![0]); null
@@ -85,6 +88,40 @@ class CaptureLifecycleTest {
         return reply
     }
     private fun scan(plugin: SecurityFlutterPlugin) = call(plugin,"scan").finding()
+    @Test fun destroyedActivityReleasesBindingEvenIfHostDefersEngineDetach() {
+        val binding=Binding(activity()); val plugin=plugin(binding)
+        call(plugin,"startScreenshotObservation")
+        val old=binding.activity.callbacks.single();old.onScreenCaptured()
+        plugin.onActivityDestroyed(binding.activity)
+        assertTrue(binding.listeners.isEmpty())
+        for(name in listOf("activity","activityBinding","observedDecor","focusTree")) {
+            val value=plugin.javaClass.getDeclaredField(name).also { it.isAccessible=true }.get(plugin)
+            assertNull(name,value)
+        }
+        assertTrue(binding.activity.callbacks.isEmpty())
+        assertEquals("observationInterrupted",scan(plugin)["reason"])
+        val next=Binding(activity());plugin.onAttachedToActivity(next.value)
+        call(plugin,"startScreenshotObservation");old.onScreenCaptured()
+        plugin.onActivityDestroyed(binding.activity) // Late old callback cannot detach the new host.
+        assertEquals("notDetected",scan(plugin)["status"])
+        assertEquals(1,next.listeners.size)
+    }
+    @Test fun memoryPressureAloneDoesNotInventCaptureOrClearHistory() {
+        val binding=Binding(activity());val plugin=plugin(binding)
+        call(plugin,"startScreenshotObservation")
+        for(level in listOf(android.content.ComponentCallbacks2.TRIM_MEMORY_RUNNING_CRITICAL,
+                android.content.ComponentCallbacks2.TRIM_MEMORY_BACKGROUND,android.content.ComponentCallbacks2.TRIM_MEMORY_COMPLETE)) {
+            binding.activity.onTrimMemory(level)
+            assertEquals("notDetected",scan(plugin)["status"])
+        }
+        binding.activity.callbacks.single().onScreenCaptured()
+        binding.activity.onLowMemory()
+        assertEquals("screenshotObserved",scan(plugin)["reason"])
+        plugin.onActivityStopped(binding.activity)
+        binding.activity.onTrimMemory(android.content.ComponentCallbacks2.TRIM_MEMORY_COMPLETE)
+        plugin.onActivityResumed(binding.activity)
+        assertEquals("observationInterrupted",scan(plugin)["reason"])
+    }
     @Test fun identicalOwnersAcrossTwoBindingsAreIsolated() {
         val activity=activity(); val ab=Binding(activity); val bb=Binding(activity); val a=plugin(ab); val b=plugin(bb)
         assertNull(call(a,"startScreenshotObservation").error); assertNull(call(b,"startScreenshotObservation").error)
@@ -95,6 +132,37 @@ class CaptureLifecycleTest {
         a.detachEngineResources()
         assertTrue(ab.listeners.isEmpty()); assertEquals(1,bb.listeners.size)
         assertEquals(1,activity.callbacks.size); assertEquals("screenshotObserved",scan(b)["reason"])
+    }
+    @Test fun screenshotCallbackQueuedBeforeFocusLossCannotContaminateRestart() {
+        val activity = activity(); val binding = Binding(activity); val plugin = plugin(binding)
+        call(plugin, "startScreenshotObservation")
+        val callback = activity.callbacks.single()
+        activity.callbackExecutors.getValue(callback).execute { callback.onScreenCaptured() }
+        binding.focus(false); binding.focus(true)
+        assertEquals("observationInterrupted", scan(plugin)["reason"])
+        assertEquals(mapOf("screenshotObserved" to false, "observationActive" to false), scan(plugin)["values"])
+        call(plugin, "startScreenshotObservation")
+        shadowOf(Looper.getMainLooper()).idle()
+        assertEquals("noKnownSignal", scan(plugin)["reason"])
+        activity.callbacks.single().onScreenCaptured()
+        assertEquals("screenshotObserved", scan(plugin)["reason"])
+    }
+    @Test fun screenshotThenSystemOverlayPreservesUnknownUntilExplicitRestart() {
+        val activity = activity(); val binding = Binding(activity); val plugin = plugin(binding)
+        call(plugin, "startScreenshotObservation")
+        activity.callbacks.single().onScreenCaptured()
+        assertEquals("screenshotObserved", scan(plugin)["reason"])
+        binding.focus(false); binding.focus(true)
+        val interrupted = scan(plugin)
+        assertEquals("observationInterrupted", interrupted["reason"])
+        assertEquals("error", interrupted["status"])
+        assertEquals(mapOf("screenshotObserved" to true, "observationActive" to false), interrupted["values"])
+        call(plugin, "startScreenshotObservation")
+        assertEquals("noKnownSignal", scan(plugin)["reason"])
+        assertEquals(mapOf("signalDetected" to false, "screenshotObserved" to false, "observationActive" to true), scan(plugin)["values"])
+        call(plugin, "stopScreenshotObservation")
+        assertEquals("observationRequired", scan(plugin)["reason"])
+        assertNull(scan(plugin)["values"])
     }
     @Test fun pauseWithRetainedFocusCannotStartAndOldCallbackCannotAffectRestart() {
         val activity=activity(); val plugin=plugin(Binding(activity)); call(plugin,"startScreenshotObservation")
@@ -162,6 +230,55 @@ class CaptureLifecycleTest {
         assertEquals("error",recording()["status"]); assertEquals(adds,activity.recordingAdds)
         assertEquals("notDetected",recording()["status"]); assertTrue(activity.recordingCallbacks.isEmpty())
         plugin.onActivityPaused(activity); assertEquals("noActivity",recording()["reason"])
+    }
+    @Test @Config(sdk=[35]) fun recordingIsFreshAcrossResizeFocusAndConfigurationReattachment() {
+        val first=Binding(activity()); val plugin=plugin(first)
+        fun recording()=call(plugin,"scan",listOf("screenRecording")).finding()
+        repeat(3) {
+            first.activity.recordingState=WindowManager.SCREEN_RECORDING_STATE_VISIBLE
+            assertEquals("detected",recording()["status"])
+            assertTrue(first.activity.recordingCallbacks.isEmpty())
+            first.activity.multiWindow=true
+            first.focus(false)
+            val adds=first.activity.recordingAdds
+            assertEquals("noActivity",recording()["reason"])
+            assertEquals(adds,first.activity.recordingAdds)
+            first.activity.recordingState=WindowManager.SCREEN_RECORDING_STATE_NOT_VISIBLE
+            first.focus(true)
+            assertEquals("notDetected",recording()["status"])
+            assertTrue(first.activity.recordingCallbacks.isEmpty())
+        }
+        plugin.onDetachedFromActivityForConfigChanges()
+        assertEquals("noActivity",recording()["reason"])
+        val next=Binding(activity())
+        next.activity.recordingState=WindowManager.SCREEN_RECORDING_STATE_VISIBLE
+        plugin.onReattachedToActivityForConfigChanges(next.value)
+        assertEquals("detected",recording()["status"])
+        assertTrue(next.activity.recordingCallbacks.isEmpty())
+        assertTrue(first.activity.recordingCallbacks.isEmpty())
+    }
+    @Test fun repeatedFoldLikeDetachCannotInventOrTransferScreenshotHistory() {
+        var current=Binding(activity()); val plugin=plugin(current)
+        repeat(3) { cycle ->
+            call(plugin,"startScreenshotObservation")
+            val old=current.activity.callbacks.single()
+            if(cycle==0) old.onScreenCaptured()
+            plugin.onActivityPaused(current.activity)
+            plugin.onDetachedFromActivityForConfigChanges()
+            val next=Binding(activity())
+            plugin.onReattachedToActivityForConfigChanges(next.value)
+            val interrupted=scan(plugin)
+            assertEquals("observationInterrupted",interrupted["reason"])
+            assertEquals(mapOf("screenshotObserved" to (cycle==0), "observationActive" to false),interrupted["values"])
+            assertTrue(current.activity.callbacks.isEmpty())
+            call(plugin,"stopScreenshotObservation")
+            assertEquals("observationRequired",scan(plugin)["reason"])
+            call(plugin,"startScreenshotObservation")
+            old.onScreenCaptured()
+            assertEquals("notDetected",scan(plugin)["status"])
+            assertEquals(mapOf("signalDetected" to false,"screenshotObserved" to false,"observationActive" to true),scan(plugin)["values"])
+            current=next
+        }
     }
     @Test fun rotationAndFocusedSplitResizeKeepExistingScreenshotEvidence() {
         val activity=activity(); val plugin=plugin(Binding(activity)); call(plugin,"startScreenshotObservation")
@@ -245,8 +362,90 @@ class CaptureLifecycleTest {
         assertEquals("observationInterrupted",scan(plugin)["reason"])
         assertTrue(activity.callbacks.isEmpty())
     }
+    @Test @Config(sdk=[35]) fun recordingInOneEngineCannotSupplyAHeadlessEngineWithAnActivity() {
+        val binding=Binding(activity()); binding.activity.recordingState=WindowManager.SCREEN_RECORDING_STATE_VISIBLE
+        val foreground=plugin(binding)
+        val headless=SecurityFlutterPlugin().also { field(it,"context",RuntimeEnvironment.getApplication()); plugins.add(it) }
+        assertEquals("detected",call(foreground,"scan",listOf("screenRecording")).finding()["status"])
+        assertEquals("noActivity",call(headless,"scan",listOf("screenRecording")).finding()["reason"])
+        headless.detachEngineResources()
+        assertEquals("detected",call(foreground,"scan",listOf("screenRecording")).finding()["status"])
+        assertTrue(binding.activity.recordingCallbacks.isEmpty())
+    }
+    @Test @Config(sdk=[35]) fun permissionRevocationDuringMixedScanCannotReturnAPreviousRecordingPositive() {
+        val activity=activity(); activity.recordingState=WindowManager.SCREEN_RECORDING_STATE_VISIBLE
+        val plugin=plugin(Binding(activity)); val gate=CountDownLatch(1)
+        val executor=ThreadPoolExecutor(1,1,0,TimeUnit.MILLISECONDS,LinkedBlockingQueue<Runnable>())
+        executor.execute { gate.await() }; field(plugin,"worker",executor)
+        val messenger=Proxy.newProxyInstance(BinaryMessenger::class.java.classLoader,arrayOf(BinaryMessenger::class.java)) { _,_,_ -> null } as BinaryMessenger
+        field(plugin,"channel",MethodChannel(messenger,"test"))
+        val reply=call(plugin,"scan",listOf("appIntegrity","screenRecording"))
+        shadowOf(RuntimeEnvironment.getApplication()).denyPermissions("android.permission.DETECT_SCREEN_RECORDING")
+        gate.countDown(); executor.submit {}.get(2,TimeUnit.SECONDS); shadowOf(Looper.getMainLooper()).idle()
+        assertEquals("missingPermission",reply.finding()["reason"])
+        assertEquals(0,activity.recordingAdds)
+        assertTrue(activity.recordingCallbacks.isEmpty())
+    }
+    @Test @Config(sdk=[35]) fun mixedScanReadsRecordingAtReplyAfterScopeChangesWithoutFocusLoss() {
+        val activity=activity(); val plugin=plugin(Binding(activity))
+        for (initial in listOf(WindowManager.SCREEN_RECORDING_STATE_NOT_VISIBLE, WindowManager.SCREEN_RECORDING_STATE_VISIBLE)) {
+            activity.recordingState=initial
+            val gate=CountDownLatch(1)
+            val executor=ThreadPoolExecutor(1,1,0,TimeUnit.MILLISECONDS,LinkedBlockingQueue<Runnable>())
+            executor.execute { gate.await() }; field(plugin,"worker",executor)
+            val messenger=Proxy.newProxyInstance(BinaryMessenger::class.java.classLoader,arrayOf(BinaryMessenger::class.java)) { _,_,_ -> null } as BinaryMessenger
+            field(plugin,"channel",MethodChannel(messenger,"test"))
+            val reply=call(plugin,"scan",listOf("appIntegrity","screenRecording")); assertNull(reply.value)
+            activity.recordingState=if(initial==WindowManager.SCREEN_RECORDING_STATE_VISIBLE)
+                WindowManager.SCREEN_RECORDING_STATE_NOT_VISIBLE else WindowManager.SCREEN_RECORDING_STATE_VISIBLE
+            gate.countDown(); executor.submit {}.get(2,TimeUnit.SECONDS); shadowOf(Looper.getMainLooper()).idle()
+            assertEquals(if(activity.recordingState==WindowManager.SCREEN_RECORDING_STATE_VISIBLE) "detected" else "notDetected",reply.finding()["status"])
+            assertTrue(activity.recordingCallbacks.isEmpty())
+            executor.shutdownNow()
+        }
+    }
+    @Test @Config(sdk=[35]) @org.robolectric.annotation.LooperMode(org.robolectric.annotation.LooperMode.Mode.PAUSED)
+    fun mixedRecordingDoesNotReadReplacementActivityOrReplyAfterEngineDestruction() {
+        for (destroyEngine in listOf(false,true)) {
+            val old=Binding(activity()); val next=Binding(activity())
+            next.activity.recordingState=WindowManager.SCREEN_RECORDING_STATE_VISIBLE
+            val plugin=plugin(old)
+            val gate=CountDownLatch(1)
+            val executor=ThreadPoolExecutor(1,1,0,TimeUnit.MILLISECONDS,LinkedBlockingQueue<Runnable>())
+            executor.execute { gate.await() }; field(plugin,"worker",executor)
+            val messenger=Proxy.newProxyInstance(BinaryMessenger::class.java.classLoader,arrayOf(BinaryMessenger::class.java)) { _,_,_ -> null } as BinaryMessenger
+            field(plugin,"channel",MethodChannel(messenger,"test"))
+            val reply=call(plugin,"scan",listOf("appIntegrity","screenRecording"))
+            gate.countDown(); executor.submit {}.get(2,TimeUnit.SECONDS)
+            assertNull(reply.value) // No Activity.setup() here: it drains Robolectric main tasks.
+            if(destroyEngine) plugin.detachEngineResources() else {
+                plugin.onDetachedFromActivityForConfigChanges(); plugin.onReattachedToActivityForConfigChanges(next.value)
+            }
+            shadowOf(Looper.getMainLooper()).idle()
+            if(destroyEngine) assertNull(reply.value) else assertEquals("observationInterrupted",reply.finding()["reason"])
+            assertEquals(0,next.activity.recordingAdds)
+            assertTrue(old.activity.recordingCallbacks.isEmpty())
+            executor.shutdownNow()
+        }
+    }
+    @Test fun mixedScanCannotCopyHistoricalScreenshotIntoReplacementWindow() {
+        val activity=activity(); val plugin=plugin(Binding(activity)); call(plugin,"startScreenshotObservation")
+        activity.callbacks.single().onScreenCaptured()
+        val gate=CountDownLatch(1); val executor=ThreadPoolExecutor(1,1,0,TimeUnit.MILLISECONDS,LinkedBlockingQueue<Runnable>())
+        executor.execute { try { gate.await() } catch (_: InterruptedException) {} }; field(plugin,"worker",executor)
+        val messenger=Proxy.newProxyInstance(BinaryMessenger::class.java.classLoader,arrayOf(BinaryMessenger::class.java)) { _,_,_ -> null } as BinaryMessenger
+        field(plugin,"channel",MethodChannel(messenger,"test"))
+        val reply=call(plugin,"scan",listOf("appIntegrity","screenshot")); assertNull(reply.value)
+        call(plugin,"stopScreenshotObservation"); call(plugin,"startScreenshotObservation")
+        gate.countDown(); executor.submit {}.get(2,TimeUnit.SECONDS); shadowOf(Looper.getMainLooper()).idle()
+        assertEquals("observationInterrupted",reply.finding()["reason"])
+        assertNull(reply.finding()["values"])
+        assertEquals("noKnownSignal",scan(plugin)["reason"])
+        assertEquals(mapOf("signalDetected" to false, "screenshotObserved" to false, "observationActive" to true), scan(plugin)["values"])
+    }
     @Test fun mixedScanCannotDeliverCleanCaptureAcrossPauseResume() {
         val activity=activity(); val plugin=plugin(Binding(activity)); call(plugin,"startScreenshotObservation")
+        activity.callbacks.single().onScreenCaptured()
         val gate=CountDownLatch(1); val executor=ThreadPoolExecutor(1,1,0,TimeUnit.MILLISECONDS,LinkedBlockingQueue<Runnable>())
         executor.execute { try { gate.await() } catch (_: InterruptedException) {} }; field(plugin,"worker",executor)
         val messenger=Proxy.newProxyInstance(BinaryMessenger::class.java.classLoader,arrayOf(BinaryMessenger::class.java)) { _,_,_ -> null } as BinaryMessenger
@@ -255,5 +454,6 @@ class CaptureLifecycleTest {
         plugin.onActivityPaused(activity); plugin.onActivityResumed(activity)
         gate.countDown(); executor.submit {}.get(2,TimeUnit.SECONDS); shadowOf(Looper.getMainLooper()).idle()
         assertEquals("observationInterrupted",reply.finding()["reason"])
+        assertEquals(mapOf("screenshotObserved" to true, "observationActive" to false), reply.finding()["values"])
     }
 }

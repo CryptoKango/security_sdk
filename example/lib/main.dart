@@ -6,6 +6,7 @@ import 'package:security_flutter/security_flutter.dart';
 import 'host_input_example.dart';
 import 'src/advanced_controls.dart';
 import 'src/demo_controller.dart';
+import 'src/device_info_panel.dart';
 import 'src/finding_presentation.dart';
 
 void main() => runApp(const SecurityDemoApp());
@@ -53,6 +54,8 @@ class _DemoPageState extends State<DemoPage> {
                 child: _Controls(controller: controller),
               ),
             ),
+            if (controller.device case final device?)
+              SliverToBoxAdapter(child: DeviceInfoPanel(result: device)),
             SliverList.builder(
               itemCount: controller.capabilities.length,
               itemBuilder: (context, index) {
@@ -96,6 +99,14 @@ class _Controls extends StatelessWidget {
         spacing: 8,
         runSpacing: 8,
         children: [
+          FilledButton(
+            onPressed: controller.busy ? null : controller.collectDeviceReport,
+            child: const Text('统一获取设备信息与检测'),
+          ),
+          OutlinedButton(
+            onPressed: controller.busy ? null : controller.queryDeviceInfo,
+            child: const Text('读取设备基础信息'),
+          ),
           FilledButton(
             onPressed: controller.busy ? null : controller.scanLocal,
             child: const Text('扫描本地信号'),

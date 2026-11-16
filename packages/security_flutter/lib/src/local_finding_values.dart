@@ -27,6 +27,10 @@ Map<String, Object?> decodeLocalValues(
         'voiceOverEnabled',
         'switchControlEnabled',
       },
+      SecurityDetectors.screenshot => {
+        'screenshotObserved',
+        'observationActive',
+      },
       SecurityDetectors.vpn => {'activeNetworkAvailable', 'vpnTransport'},
       SecurityDetectors.proxy => {
         'hostProxyConfigured',
@@ -64,6 +68,24 @@ Map<String, Object?> decodeLocalValues(
               status != DetectionStatus.notDetected) ||
           result['signalDetected'] != (status == DetectionStatus.detected))) {
     invalid();
+  }
+  if (result.containsKey('screenshotObserved') ||
+      result.containsKey('observationActive')) {
+    if (!result.containsKey('screenshotObserved') ||
+        !result.containsKey('observationActive')) {
+      invalid();
+    }
+    if (result['observationActive'] == true) {
+      if ((status != DetectionStatus.detected &&
+              status != DetectionStatus.notDetected) ||
+          result['screenshotObserved'] !=
+              (status == DetectionStatus.detected)) {
+        invalid();
+      }
+    } else if (status != DetectionStatus.error ||
+        reason != FindingReason.observationInterrupted) {
+      invalid();
+    }
   }
   if (result.keys.any((key) => key.startsWith('setting'))) {
     if (!result.keys.toSet().containsAll({

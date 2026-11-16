@@ -67,6 +67,87 @@ void main() {
     },
   );
   test(
+    'screenshot history survives interruption without promoting error to detected',
+    () async {
+      for (final seen in [false, true]) {
+        final values = {'screenshotObserved': seen, 'observationActive': false};
+        final finding = await scan(
+          'screenshot',
+          'error',
+          'observationInterrupted',
+          values,
+        );
+        expect(finding.status, DetectionStatus.error);
+        expect(finding.values, values);
+      }
+      final active = await scan(
+        'screenshot',
+        'detected',
+        'screenshotObserved',
+        {
+          'signalDetected': true,
+          'screenshotObserved': true,
+          'observationActive': true,
+        },
+      );
+      expect(active.values['observationActive'], isTrue);
+    },
+  );
+  test(
+    'screenshot history rejects contradictory scope, status and detector',
+    () async {
+      for (final sample in <(String, String, String, Map<String, Object?>)>[
+        (
+          'screenshot',
+          'notDetected',
+          'noKnownSignal',
+          {'screenshotObserved': true, 'observationActive': true},
+        ),
+        (
+          'screenshot',
+          'detected',
+          'screenshotObserved',
+          {'screenshotObserved': true, 'observationActive': false},
+        ),
+        (
+          'screenshot',
+          'error',
+          'observationRequired',
+          {'screenshotObserved': true, 'observationActive': false},
+        ),
+        (
+          'screenshot',
+          'error',
+          'observationInterrupted',
+          {'screenshotObserved': true, 'observationActive': true},
+        ),
+        (
+          'screenshot',
+          'error',
+          'observationInterrupted',
+          {'screenshotObserved': true},
+        ),
+        (
+          'screenRecording',
+          'error',
+          'observationInterrupted',
+          {'screenshotObserved': true, 'observationActive': false},
+        ),
+      ]) {
+        await expectLater(
+          scan(sample.$1, sample.$2, sample.$3, sample.$4),
+          throwsA(
+            isA<SecurityFailure>().having(
+              (e) => e.code,
+              'code',
+              SecurityErrorCode.invalidResponse,
+            ),
+          ),
+        );
+      }
+    },
+  );
+  test(
     'legacy findings have empty values, never fabricated false or zero',
     () async {
       expect(
